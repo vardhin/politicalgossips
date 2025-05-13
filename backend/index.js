@@ -12,12 +12,13 @@ const helmet = require('helmet');
 dotenv.config();
 
 // JWT Secret - Store this in .env file
-const JWT_SECRET = process.env.JWT_SECRET;
-const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
-if (!JWT_SECRET || !REFRESH_TOKEN_SECRET) {
-  console.error('JWT_SECRET and REFRESH_TOKEN_SECRET are required. Set them in your .env file');
-  process.exit(1);
+const JWT_SECRET = process.env.JWT_SECRET || 'development-jwt-secret';
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || 'development-refresh-secret';
+
+if (process.env.NODE_ENV === 'production' && (!JWT_SECRET || !REFRESH_TOKEN_SECRET)) {
+  console.error('Warning: JWT_SECRET and/or REFRESH_TOKEN_SECRET not set in production environment');
 }
+
 const JWT_EXPIRES_IN = '1h';
 const ACCESS_TOKEN_EXPIRES_IN = '1h';
 const REFRESH_TOKEN_EXPIRES_IN = '7d';
@@ -52,19 +53,39 @@ app.use(cors({
   origin: [
     'https://www.politicalgossips.com', 
     'https://politicalgossips.com',
+    'https://politicalgossips-l7g8mj95m-vardh1n.vercel.app',
+    'https://politicalgossipsbackend.vercel.app',
     process.env.FRONTEND_URL || 'http://localhost:5173'
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => console.log('Connected to MongoDB'))
-.catch(err => console.error('MongoDB connection error:', err));
+// Connect to MongoDB - use a connection function instead
+let cachedDb = null;
+
+async function connectToDatabase() {
+  if (cachedDb) {
+    return cachedDb;
+  }
+  
+  try {
+    const client = await mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+    
+    cachedDb = client;
+    console.log('Connected to MongoDB');
+    return client;
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    throw error;
+  }
+}
+
+// Call this before your routes
+connectToDatabase().catch(err => console.error(err));
 
 // Article Schema
 const articleSchema = new mongoose.Schema({
@@ -450,17 +471,13 @@ app.get('/api/articles/:id', async (req, res) => {
   }
 });
 
-// Simple server startup for platform deployments
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Set up server to listen on port if running directly (not in serverless)
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
 
-// Export functions for potential use in other files
-module.exports = {
-  createArticle,
-  getLatestArticles,
-  getArticlesByCategory,
-  getFeaturedArticles,
-  getArticleById
-};
+// Export for serverless use
+module.exports = app;
