@@ -15,24 +15,53 @@
 
   async function checkBackendConnection() {
     try {
-      // Try both paths to ensure compatibility with both local and Vercel
-      const healthUrl = `${PUBLIC_API_URL}/health`;
-      console.log('Checking backend connection at:', healthUrl);
+      // Define endpoints to try in order
+      const endpoints = [
+        `${PUBLIC_API_URL}/health`,
+        `${PUBLIC_API_URL}/api/health`,
+        `${PUBLIC_API_URL}` // Try root as last resort
+      ];
       
-      const response = await fetch(healthUrl);
+      let lastError = null;
       
-      // Check if response is valid
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        console.error('Invalid content type:', contentType);
-        throw new Error('Invalid response content type');
+      // Try each endpoint until one works
+      for (const endpoint of endpoints) {
+        try {
+          console.log('Checking backend connection at:', endpoint);
+          const response = await fetch(endpoint);
+          
+          // Try to parse response regardless of content type
+          const text = await response.text();
+          let data;
+          
+          try {
+            data = JSON.parse(text);
+            console.log('Backend response data:', data);
+            
+            // If we have status info, use it
+            if (data.status && data.dbState) {
+              backendStatus = `Backend: ${data.status}, DB: ${data.dbState}`;
+            } else if (data.status) {
+              backendStatus = `Backend: ${data.status}`;
+            } else {
+              backendStatus = 'Backend connected';
+            }
+            
+            return true; // Successfully connected
+          } catch (parseError) {
+            console.warn('Response not valid JSON:', text.substring(0, 100));
+            throw new Error('Invalid JSON response');
+          }
+        } catch (err) {
+          lastError = err;
+          console.warn(`Failed to connect to ${endpoint}:`, err.message);
+          // Continue to next endpoint
+        }
       }
       
-      const data = await response.json();
-      console.log('Backend health check response:', data);
+      // If we get here, all endpoints failed
+      throw lastError || new Error('All backend connection attempts failed');
       
-      backendStatus = `Backend: ${data.status}, DB: ${data.dbState}`;
-      return data.status === 'ok';
     } catch (err) {
       console.error('Backend connection check failed:', err);
       backendStatus = 'Backend unavailable';

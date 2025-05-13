@@ -471,6 +471,14 @@ app.get('/api/articles/:id', async (req, res) => {
   }
 });
 
+// Root route for basic checks
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    message: 'Political Gossips API is running'
+  });
+});
+
 // Move health check to root path for Vercel
 app.get('/health', async (req, res) => {
   try {
