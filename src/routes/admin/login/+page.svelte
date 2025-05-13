@@ -15,8 +15,19 @@
 
   async function checkBackendConnection() {
     try {
-      console.log('Checking backend connection at:', `${PUBLIC_API_URL}/api/health`);
-      const response = await fetch(`${PUBLIC_API_URL}/api/health`);
+      // Try both paths to ensure compatibility with both local and Vercel
+      const healthUrl = `${PUBLIC_API_URL}/health`;
+      console.log('Checking backend connection at:', healthUrl);
+      
+      const response = await fetch(healthUrl);
+      
+      // Check if response is valid
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('Invalid content type:', contentType);
+        throw new Error('Invalid response content type');
+      }
+      
       const data = await response.json();
       console.log('Backend health check response:', data);
       

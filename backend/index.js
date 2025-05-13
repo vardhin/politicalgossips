@@ -471,8 +471,8 @@ app.get('/api/articles/:id', async (req, res) => {
   }
 });
 
-// Add health check endpoint to verify backend and DB connection
-app.get('/api/health', async (req, res) => {
+// Move health check to root path for Vercel
+app.get('/health', async (req, res) => {
   try {
     // Check database connection
     const dbState = mongoose.connection.readyState;
@@ -506,6 +506,12 @@ app.get('/api/health', async (req, res) => {
       dbState: 'error'
     });
   }
+});
+
+// Keep the /api/health endpoint for local development
+app.get('/api/health', async (req, res) => {
+  // Redirect to the health endpoint
+  res.redirect('/health');
 });
 
 // Set up server to listen on port if running directly (not in serverless)

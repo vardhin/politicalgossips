@@ -8,7 +8,11 @@
     ],
     "routes": [
     {
-        "src": "/(.*)",
+        "src": "/health",
+        "dest": "index.js"
+    },
+    {
+        "src": "/api/(.*)",
         "dest": "index.js"
     }
     ]
