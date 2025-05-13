@@ -46,7 +46,13 @@ app.use(helmet({
 }));
 
 app.use(express.json());
-app.use(cors());
+
+// Update CORS configuration
+app.use(cors({
+  origin: ['https://your-frontend-domain.vercel.app', process.env.FRONTEND_URL || 'http://localhost:5173'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
