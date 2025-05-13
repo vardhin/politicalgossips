@@ -471,6 +471,43 @@ app.get('/api/articles/:id', async (req, res) => {
   }
 });
 
+// Add health check endpoint to verify backend and DB connection
+app.get('/api/health', async (req, res) => {
+  try {
+    // Check database connection
+    const dbState = mongoose.connection.readyState;
+    const dbStatus = {
+      0: 'disconnected',
+      1: 'connected',
+      2: 'connecting',
+      3: 'disconnecting'
+    };
+    
+    if (dbState === 1) {
+      // Test DB with a ping
+      await mongoose.connection.db.admin().ping();
+      return res.status(200).json({ 
+        status: 'ok', 
+        message: 'Backend is online and connected to MongoDB',
+        dbState: dbStatus[dbState]
+      });
+    } else {
+      return res.status(200).json({ 
+        status: 'warning', 
+        message: 'Backend is online but MongoDB status: ' + dbStatus[dbState],
+        dbState: dbStatus[dbState]
+      });
+    }
+  } catch (error) {
+    console.error('Health check error:', error);
+    res.status(500).json({ 
+      status: 'error', 
+      message: 'Backend error: ' + error.message,
+      dbState: 'error'
+    });
+  }
+});
+
 // Set up server to listen on port if running directly (not in serverless)
 if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 3000;

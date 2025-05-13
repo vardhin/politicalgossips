@@ -1,11 +1,33 @@
 <script>
   import { goto } from '$app/navigation';
   import { PUBLIC_API_URL } from '$env/static/public';
+  import { onMount } from 'svelte';
   
   let username = '';
   let password = '';
   let error = '';
   let loading = false;
+  let backendStatus = 'Checking...';
+
+  onMount(async () => {
+    await checkBackendConnection();
+  });
+
+  async function checkBackendConnection() {
+    try {
+      console.log('Checking backend connection at:', `${PUBLIC_API_URL}/api/health`);
+      const response = await fetch(`${PUBLIC_API_URL}/api/health`);
+      const data = await response.json();
+      console.log('Backend health check response:', data);
+      
+      backendStatus = `Backend: ${data.status}, DB: ${data.dbState}`;
+      return data.status === 'ok';
+    } catch (err) {
+      console.error('Backend connection check failed:', err);
+      backendStatus = 'Backend unavailable';
+      return false;
+    }
+  }
 
   async function handleLogin(event) {
     event.preventDefault();
@@ -13,26 +35,45 @@
     error = '';
     
     try {
+      // Check backend connection first
+      const isConnected = await checkBackendConnection();
+      if (!isConnected) {
+        throw new Error('Cannot connect to the backend server');
+      }
+      
+      console.log('Sending login request to:', `${PUBLIC_API_URL}/api/auth/login`);
       const response = await fetch(`${PUBLIC_API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
       });
       
-      const data = await response.json();
+      console.log('Login response status:', response.status);
+      
+      // Try to parse response as JSON
+      let data;
+      const responseText = await response.text();
+      console.log('Raw response:', responseText);
+      
+      try {
+        data = JSON.parse(responseText);
+        console.log('Parsed response data:', data);
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        throw new Error('Invalid response from server: ' + responseText.substring(0, 100));
+      }
       
       if (!response.ok) {
         throw new Error(data.message || 'Login failed');
       }
       
-      // Store token in localStorage - use accessToken instead of token
       localStorage.setItem('authToken', data.accessToken);
       localStorage.setItem('user', JSON.stringify(data.user));
       
-      // Redirect to admin dashboard
       goto('/admin/dashboard');
       
     } catch (err) {
+      console.error('Login error:', err);
       error = err.message;
     } finally {
       loading = false;
@@ -47,6 +88,10 @@
 <div class="login-container">
   <div class="login-card glass-panel">
     <h1>Admin Login</h1>
+    
+    <div class="backend-status" class:error={backendStatus.includes('unavailable')}>
+      {backendStatus}
+    </div>
     
     {#if error}
       <div class="error-message">
@@ -186,5 +231,19 @@
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+  }
+
+  .backend-status {
+    padding: 8px;
+    margin-bottom: 15px;
+    font-size: 0.8rem;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    text-align: center;
+  }
+  
+  .backend-status.error {
+    background: rgba(255, 0, 0, 0.1);
+    color: #a94442;
   }
 </style>
