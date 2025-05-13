@@ -49,7 +49,11 @@ app.use(express.json());
 
 // Update CORS configuration
 app.use(cors({
-  origin: ['https://your-frontend-domain.vercel.app', process.env.FRONTEND_URL || 'http://localhost:5173'],
+  origin: [
+    'https://www.politicalgossips.com', 
+    'https://politicalgossips.com',
+    process.env.FRONTEND_URL || 'http://localhost:5173'
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
