@@ -2,11 +2,11 @@ const express = require('express');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 const dotenv = require('dotenv');
-const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
+const cors = require('cors');
 
 // Load environment variables
 dotenv.config();
@@ -26,39 +26,60 @@ const REFRESH_TOKEN_EXPIRES_IN = '7d';
 // Initialize express app
 const app = express();
 
-// Apply Helmet middleware with custom config
+// Apply Helmet middleware with relaxed settings for Vercel deployment
 app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "https:"],
-    },
-  },
-  hsts: {
-    maxAge: 31536000, // 1 year in seconds
-    includeSubDomains: true,
-    preload: true
-  },
-  frameguard: {
-    action: 'deny'
-  }
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false
 }));
 
 app.use(express.json());
 
-// Update CORS configuration
+// CORS configuration
+const allowedOrigins = [
+  'https://political-gossips.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000'
+];
+
+// API access middleware
+const apiAccessMiddleware = (req, res, next) => {
+  const isAPIRequest = req.path.startsWith('/api/');
+  const isBrowserRequest = req.headers['sec-fetch-mode'] === 'navigate';
+  
+  // If it's an API request and it's a direct browser navigation
+  if (isAPIRequest && isBrowserRequest) {
+    return res.status(403).json({
+      error: 'Direct browser access to API endpoints is not allowed',
+      message: 'Please access the API through the frontend application'
+    });
+  }
+  
+  next();
+};
+
+// Apply API access middleware before CORS
+app.use(apiAccessMiddleware);
+
 app.use(cors({
-  origin: [
-    'https://www.politicalgossips.com', 
-    'https://politicalgossips.com',
-    'https://politicalgossips.onrender.com',
-    process.env.FRONTEND_URL || 'http://localhost:5173'
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      return callback(new Error('CORS not allowed'), false);
+    }
+    return callback(null, true);
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Add request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - Origin: ${req.headers.origin} - Sec-Fetch-Mode: ${req.headers['sec-fetch-mode']}`);
+  next();
+});
 
 // Connect to MongoDB - use a connection function instead
 let cachedDb = null;
@@ -68,23 +89,36 @@ async function connectToDatabase() {
     return cachedDb;
   }
   
+  if (!process.env.MONGODB_URI) {
+    throw new Error('MONGODB_URI is not defined in environment variables');
+  }
+
   try {
+    console.log('Attempting to connect to MongoDB...');
     const client = await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
-      useUnifiedTopology: true
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000 // 5 second timeout
     });
     
     cachedDb = client;
-    console.log('Connected to MongoDB');
+    console.log('Successfully connected to MongoDB Cloud Cluster');
     return client;
   } catch (error) {
-    console.error('MongoDB connection error:', error);
+    console.error('MongoDB connection error:', {
+      message: error.message,
+      code: error.code,
+      name: error.name
+    });
     throw error;
   }
 }
 
 // Call this before your routes
-connectToDatabase().catch(err => console.error(err));
+connectToDatabase().catch(err => {
+  console.error('Failed to connect to MongoDB:', err);
+  process.exit(1); // Exit if we can't connect to the database
+});
 
 // Article Schema
 const articleSchema = new mongoose.Schema({
@@ -181,9 +215,12 @@ const createArticle = async (title, summary, article_text, date, image, category
 // Fetch latest articles
 const getLatestArticles = async (limit = 10) => {
   try {
-    return await Article.find()
+    console.log('Fetching latest articles with limit:', limit);
+    const articles = await Article.find()
       .sort({ date: -1 })
       .limit(limit);
+    console.log(`Found ${articles.length} latest articles`);
+    return articles;
   } catch (error) {
     console.error('Error fetching latest articles:', error);
     throw error;
@@ -205,9 +242,12 @@ const getArticlesByCategory = async (category, limit = 10) => {
 // Fetch featured articles
 const getFeaturedArticles = async (limit = 3) => {
   try {
-    return await Article.find({ featured: true })
+    console.log('Fetching featured articles with limit:', limit);
+    const articles = await Article.find({ featured: true })
       .sort({ date: -1 })
       .limit(limit);
+    console.log(`Found ${articles.length} featured articles`);
+    return articles;
   } catch (error) {
     console.error('Error fetching featured articles:', error);
     throw error;
@@ -426,11 +466,17 @@ app.post('/api/articles', authenticate, async (req, res) => {
 
 app.get('/api/articles/latest', async (req, res) => {
   try {
+    console.log('Received request for latest articles');
     const limit = parseInt(req.query.limit) || 10;
     const articles = await getLatestArticles(limit);
+    console.log(`Sending ${articles.length} latest articles`);
     res.json(articles);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error in /api/articles/latest:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch latest articles',
+      details: error.message 
+    });
   }
 });
 
@@ -447,11 +493,17 @@ app.get('/api/articles/category/:category', async (req, res) => {
 
 app.get('/api/articles/featured', async (req, res) => {
   try {
+    console.log('Received request for featured articles');
     const limit = parseInt(req.query.limit) || 3;
     const articles = await getFeaturedArticles(limit);
+    console.log(`Sending ${articles.length} featured articles`);
     res.json(articles);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error in /api/articles/featured:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch featured articles',
+      details: error.message 
+    });
   }
 });
 
@@ -565,6 +617,28 @@ app.get('/api/health', async (req, res) => {
   // Redirect to the health endpoint
   res.redirect('/health');
 });
+
+// Error handling middleware
+const errorHandler = (err, req, res, next) => {
+  console.error('Error details:', {
+    message: err.message,
+    stack: err.stack,
+    path: req.path,
+    method: req.method,
+    body: req.body,
+    query: req.query,
+    params: req.params
+  });
+  
+  res.status(500).json({
+    error: 'Internal Server Error',
+    message: err.message,
+    path: req.path
+  });
+};
+
+// Add error handler at the end
+app.use(errorHandler);
 
 // Set up server to listen on port if running directly (not in serverless)
 if (process.env.NODE_ENV !== 'production') {
