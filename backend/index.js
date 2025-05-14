@@ -38,6 +38,7 @@ app.use(express.json());
 const allowedOrigins = [
   'https://politicalgossips.vercel.app',
   'https://politicalgossips.com',
+  'https://www.politicalgossips.com',
   'https://politicalgossips-frontend-three.vercel.app',
   'https://politicalgossips.com',
   'www.politicalgossips.com',
