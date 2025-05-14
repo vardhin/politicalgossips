@@ -39,7 +39,12 @@ const allowedOrigins = [
   'https://politicalgossips.vercel.app',
   'https://politicalgossips.com',
   'http://localhost:5173',
-  'http://localhost:3000'
+  'http://localhost:3000',
+  'https://politicalgossips-frontend-three.vercel.app',
+  'https://politicalgossips.com',
+  'www.politicalgossips.com',
+  'politicalgossips.com',
+
 ];
 
 // API access middleware
