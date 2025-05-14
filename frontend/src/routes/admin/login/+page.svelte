@@ -81,8 +81,8 @@
         throw new Error('Cannot connect to the backend server');
       }
       
-      console.log('Sending login request to:', `${PUBLIC_API_URL}/api/auth/login`);
-      const response = await fetch(`${PUBLIC_API_URL}/api/auth/login`, {
+      console.log('Sending login request to:', `${PUBLIC_API_URL}/auth/login`);
+      const response = await fetch(`${PUBLIC_API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
