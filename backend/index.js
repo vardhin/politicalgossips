@@ -36,9 +36,7 @@ app.use(express.json());
 
 // CORS configuration
 const allowedOrigins = [
-  'https://political-gossips.vercel.app',
-  'http://localhost:5173',
-  'http://localhost:3000'
+  'https://www.politicalgossips.com/'
 ];
 
 // API access middleware
