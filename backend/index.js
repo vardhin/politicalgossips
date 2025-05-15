@@ -422,7 +422,11 @@ app.get('/api/articles/:id/image', async (req, res) => {
       return res.status(404).json({ error: 'Image not found' });
     }
     
+    // Set proper headers for cross-origin image sharing
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.set('Access-Control-Allow-Origin', '*');
     res.set('Content-Type', article.image.contentType);
+    
     res.send(article.image.data);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -432,16 +436,22 @@ app.get('/api/articles/:id/image', async (req, res) => {
 // Image endpoint
 app.get('/image/:articleId', async (req, res) => {
   try {
-    const article = await articleService.getArticleById(parseInt(req.params.articleId));
-    if (!article || !article.image || !article.image.data) {
+    const { articleId } = req.params;
+    const article = await articleService.getArticleById(parseInt(articleId));
+    
+    if (!article || !article.image) {
       return res.status(404).send('Image not found');
     }
     
+    // Set proper headers for cross-origin image sharing
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.set('Access-Control-Allow-Origin', '*');
     res.set('Content-Type', article.image.contentType);
-    return res.send(article.image.data);
+    
+    res.send(article.image.data);
   } catch (error) {
     console.error('Error serving image:', error);
-    return res.status(500).send('Error serving image');
+    res.status(500).send('Error retrieving image');
   }
 });
 
