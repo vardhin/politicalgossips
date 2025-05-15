@@ -7,6 +7,8 @@ const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const cors = require('cors');
+const articleService = require('./articleService');
+const healthService = require('./healthService');
 
 // Load environment variables
 dotenv.config();
@@ -45,7 +47,6 @@ const allowedOrigins = [
   'politicalgossips.com',
   'politicalgossips-frontend-lim4hpu1x-vardh1n.vercel.app',
   'https://politicalgossips-frontend-lim4hpu1x-vardh1n.vercel.app',
-
 ];
 
 // API access middleware
@@ -126,150 +127,6 @@ connectToDatabase().catch(err => {
   console.error('Failed to connect to MongoDB:', err);
   process.exit(1); // Exit if we can't connect to the database
 });
-
-// Article Schema
-const articleSchema = new mongoose.Schema({
-  articleId: {
-    type: Number,
-    unique: true
-  },
-  hash: {
-    type: String,
-    unique: true
-  },
-  title: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  summary: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  article_text: {
-    type: String,
-    required: true
-  },
-  date: {
-    type: Date,
-    default: Date.now
-  },
-  image: {
-    type: String,
-    required: true
-  },
-  category: {
-    type: String,
-    enum: ['Political', 'General'],
-    required: true
-  },
-  featured: {
-    type: Boolean,
-    default: false
-  }
-}, { timestamps: true });
-
-// Auto-increment articleId before saving
-articleSchema.pre('save', async function(next) {
-  if (!this.isNew) {
-    return next();
-  }
-  
-  try {
-    const lastArticle = await this.constructor.findOne({}, {}, { sort: { articleId: -1 } });
-    this.articleId = lastArticle ? lastArticle.articleId + 1 : 1;
-    next();
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Create model
-const Article = mongoose.model('Article', articleSchema);
-
-// Generate unique hash
-const generateHash = (title, date) => {
-  const data = title + date.toString();
-  return crypto.createHash('md5').update(data).digest('hex');
-};
-
-// Create a new article
-const createArticle = async (title, summary, article_text, date, image, category, featured = false) => {
-  try {
-    const articleDate = date ? new Date(date) : new Date();
-    const hash = generateHash(title, articleDate);
-    
-    const article = new Article({
-      title,
-      summary,
-      article_text,
-      date: articleDate,
-      image,
-      category,
-      featured,
-      hash
-    });
-    
-    await article.save();
-    return article;
-  } catch (error) {
-    console.error('Error creating article:', error);
-    throw error;
-  }
-};
-
-// Fetch latest articles
-const getLatestArticles = async (limit = 10) => {
-  try {
-    console.log('Fetching latest articles with limit:', limit);
-    const articles = await Article.find()
-      .sort({ date: -1 })
-      .limit(limit);
-    console.log(`Found ${articles.length} latest articles`);
-    return articles;
-  } catch (error) {
-    console.error('Error fetching latest articles:', error);
-    throw error;
-  }
-};
-
-// Fetch articles by category
-const getArticlesByCategory = async (category, limit = 10) => {
-  try {
-    return await Article.find({ category })
-      .sort({ date: -1 })
-      .limit(limit);
-  } catch (error) {
-    console.error(`Error fetching ${category} articles:`, error);
-    throw error;
-  }
-};
-
-// Fetch featured articles
-const getFeaturedArticles = async (limit = 3) => {
-  try {
-    console.log('Fetching featured articles with limit:', limit);
-    const articles = await Article.find({ featured: true })
-      .sort({ date: -1 })
-      .limit(limit);
-    console.log(`Found ${articles.length} featured articles`);
-    return articles;
-  } catch (error) {
-    console.error('Error fetching featured articles:', error);
-    throw error;
-  }
-};
-
-// Fetch article by ID
-const getArticleById = async (articleId) => {
-  try {
-    return await Article.findOne({ articleId });
-  } catch (error) {
-    console.error('Error fetching article by ID:', error);
-    throw error;
-  }
-};
 
 // User Schema
 const userSchema = new mongoose.Schema({
@@ -464,7 +321,7 @@ app.post('/api/articles', authenticate, async (req, res) => {
     }
     
     const { title, summary, article_text, date, image, category, featured } = req.body;
-    const article = await createArticle(title, summary, article_text, date, image, category, featured);
+    const article = await articleService.createArticle(title, summary, article_text, date, image, category, featured);
     res.status(201).json(article);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -475,7 +332,7 @@ app.get('/api/articles/latest', async (req, res) => {
   try {
     console.log('Received request for latest articles');
     const limit = parseInt(req.query.limit) || 10;
-    const articles = await getLatestArticles(limit);
+    const articles = await articleService.getLatestArticles(limit);
     console.log(`Sending ${articles.length} latest articles`);
     res.json(articles);
   } catch (error) {
@@ -491,7 +348,7 @@ app.get('/api/articles/category/:category', async (req, res) => {
   try {
     const { category } = req.params;
     const limit = parseInt(req.query.limit) || 10;
-    const articles = await getArticlesByCategory(category, limit);
+    const articles = await articleService.getArticlesByCategory(category, limit);
     res.json(articles);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -502,7 +359,7 @@ app.get('/api/articles/featured', async (req, res) => {
   try {
     console.log('Received request for featured articles');
     const limit = parseInt(req.query.limit) || 3;
-    const articles = await getFeaturedArticles(limit);
+    const articles = await articleService.getFeaturedArticles(limit);
     console.log(`Sending ${articles.length} featured articles`);
     res.json(articles);
   } catch (error) {
@@ -517,7 +374,7 @@ app.get('/api/articles/featured', async (req, res) => {
 app.get('/api/articles/:id', async (req, res) => {
   try {
     const articleId = parseInt(req.params.id);
-    const article = await getArticleById(articleId);
+    const article = await articleService.getArticleById(articleId);
     
     if (!article) {
       return res.status(404).json({ error: 'Article not found' });
@@ -529,49 +386,12 @@ app.get('/api/articles/:id', async (req, res) => {
   }
 });
 
-// Root route for basic checks - Move this higher in importance
+// Root route for basic checks
 app.get('/api', (req, res) => {
   res.status(200).json({ 
     status: 'ok', 
     message: 'Political Gossips API is running'
   });
-});
-
-// Fix health check to be directly under /api path
-app.get('/api/health', async (req, res) => {
-  try {
-    // Check database connection
-    const dbState = mongoose.connection.readyState;
-    const dbStatus = {
-      0: 'disconnected',
-      1: 'connected',
-      2: 'connecting',
-      3: 'disconnecting'
-    };
-    
-    if (dbState === 1) {
-      // Test DB with a ping
-      await mongoose.connection.db.admin().ping();
-      return res.status(200).json({ 
-        status: 'ok', 
-        message: 'Backend is online and connected to MongoDB',
-        dbState: dbStatus[dbState]
-      });
-    } else {
-      return res.status(200).json({ 
-        status: 'warning', 
-        message: 'Backend is online but MongoDB status: ' + dbStatus[dbState],
-        dbState: dbStatus[dbState]
-      });
-    }
-  } catch (error) {
-    console.error('Health check error:', error);
-    res.status(500).json({ 
-      status: 'error', 
-      message: 'Backend error: ' + error.message,
-      dbState: 'error'
-    });
-  }
 });
 
 // Root route for basic checks
@@ -582,48 +402,9 @@ app.get('/', (req, res) => {
   });
 });
 
-// Move health check to root path for Vercel
-app.get('/health', async (req, res) => {
-  try {
-    // Check database connection
-    const dbState = mongoose.connection.readyState;
-    const dbStatus = {
-      0: 'disconnected',
-      1: 'connected',
-      2: 'connecting',
-      3: 'disconnecting'
-    };
-    
-    if (dbState === 1) {
-      // Test DB with a ping
-      await mongoose.connection.db.admin().ping();
-      return res.status(200).json({ 
-        status: 'ok', 
-        message: 'Backend is online and connected to MongoDB',
-        dbState: dbStatus[dbState]
-      });
-    } else {
-      return res.status(200).json({ 
-        status: 'warning', 
-        message: 'Backend is online but MongoDB status: ' + dbStatus[dbState],
-        dbState: dbStatus[dbState]
-      });
-    }
-  } catch (error) {
-    console.error('Health check error:', error);
-    res.status(500).json({ 
-      status: 'error', 
-      message: 'Backend error: ' + error.message,
-      dbState: 'error'
-    });
-  }
-});
-
-// Keep the /api/health endpoint for local development
-app.get('/api/health', async (req, res) => {
-  // Redirect to the health endpoint
-  res.redirect('/health');
-});
+// Health check routes using the health service
+app.get('/api/health', healthService.healthCheckHandler);
+app.get('/health', healthService.healthCheckHandler);
 
 // Error handling middleware
 const errorHandler = (err, req, res, next) => {
