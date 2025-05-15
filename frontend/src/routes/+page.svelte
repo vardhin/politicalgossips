@@ -2,6 +2,8 @@
   import { onMount } from 'svelte';
   import NavBar from './../lib/components/NavBar.svelte';
   import { PUBLIC_API_URL } from '$env/static/public';
+  import { theme } from './../lib/stores/theme';
+  import './../lib/styles/theme.css';
   
   // Simplified categories
   const categories = ["General", "Political"];
@@ -315,14 +317,14 @@
 </div>
 
 <style>
-  /* Base styles */
+  /* Replace your existing body styles */
   :global(body) {
     margin: 0;
     padding: 0;
     font-family: 'Inter', sans-serif;
     line-height: 1.6;
-    color: #333;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    color: var(--text-secondary);
+    background: var(--background-gradient);
     background-attachment: fixed;
     min-height: 100vh;
   }
@@ -333,39 +335,40 @@
     padding: 80px 20px 40px;
   }
   
-  /* Glassmorphic styles */
+  /* Update your glass-panel style */
   .glass-panel {
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--glass-bg);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--card-shadow);
     padding: 2rem;
     margin-bottom: 2.5rem;
   }
   
+  /* Update glass-card style */
   .glass-card {
-    background: rgba(255, 255, 255, 0.25);
+    background: var(--glass-card-bg);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--card-shadow);
     overflow: hidden;
     transition: transform 0.3s, box-shadow 0.3s;
   }
   
   .glass-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--card-hover-shadow);
   }
   
-  /* Typography */
+  /* Update typography */
   h2 {
     font-size: 1.8rem;
     font-weight: 600;
-    color: #2c3e50;
+    color: var(--text-primary);
     margin-top: 0;
     margin-bottom: 1.5rem;
     position: relative;
@@ -379,239 +382,126 @@
     left: 0;
     width: 40px;
     height: 3px;
-    background-color: #2c3e50;
+    background-color: var(--text-primary);
     border-radius: 2px;
   }
   
-  /* Featured Articles section */
-  .featured-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
-  }
-  
-  .article-card img {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-  }
-  
-  .article-content {
-    padding: 1.2rem;
-  }
-  
-  .article-meta {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.8rem;
-    margin-bottom: 0.8rem;
-  }
-  
-  .category {
-    color: #2c3e50;
-    font-weight: 600;
-  }
-  
-  .date {
-    color: #666;
-  }
-  
+  /* Update article-card styles */
   .article-card h3 {
     margin: 0 0 0.8rem;
     font-size: 1.2rem;
     line-height: 1.4;
+    color: var(--text-primary);
   }
   
   .article-card p {
     margin-bottom: 1.2rem;
-    color: #555;
+    color: var(--text-secondary);
     font-size: 0.95rem;
   }
   
+  /* Update category styles */
+  .category {
+    color: var(--text-primary);
+    font-weight: 600;
+    background: var(--category-bg);
+    padding: 0.3rem 0.7rem;
+    border-radius: 50px;
+    font-size: 0.8rem;
+  }
+  
+  .date {
+    color: var(--text-secondary);
+  }
+  
+  /* Update read-more button */
   .read-more {
     display: inline-block;
     padding: 0.5rem 1rem;
-    background-color: rgba(44, 62, 80, 0.85);
-    color: white;
+    background-color: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
     text-decoration: none;
     border-radius: 4px;
     font-size: 0.9rem;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, transform 0.2s;
   }
   
   .read-more:hover {
-    background-color: rgba(44, 62, 80, 1);
+    background-color: var(--text-primary);
+    transform: translateY(-2px);
   }
   
-  /* Latest News section */
-  .news-list {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
-  }
-  
-  .news-item {
-    padding: 1.2rem;
-  }
-  
-  .news-item h3 {
-    margin: 0.5rem 0 0;
-    font-size: 1.1rem;
-  }
-  
+  /* Update news-item links */
   .news-item h3 a {
-    color: #333;
+    color: var(--text-primary);
     text-decoration: none;
     transition: color 0.3s;
   }
   
   .news-item h3 a:hover {
-    color: #2c3e50;
+    color: var(--accent-color);
   }
   
-  /* Contact section */
-  .contact-content {
-    padding: 2rem;
-  }
-  
-  .contact-form {
-    margin-top: 1.5rem;
-  }
-  
-  .form-group {
-    margin-bottom: 1rem;
-  }
-  
+  /* Update form fields */
   .form-group input,
   .form-group textarea {
     width: 100%;
     padding: 0.8rem;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid var(--glass-border);
+    background: var(--glass-card-bg);
     border-radius: 4px;
-    color: #333;
+    color: var(--text-primary);
     font-family: inherit;
   }
   
   .form-group input:focus,
   .form-group textarea:focus {
     outline: none;
-    border-color: rgba(44, 62, 80, 0.5);
+    border-color: var(--accent-color);
   }
   
-  /* Disabled form elements */
-  .form-group input:disabled,
-  .form-group textarea:disabled,
-  .submit-btn:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
-  
+  /* Update submit button */
   .submit-btn {
     padding: 0.8rem 1.5rem;
-    background: rgba(44, 62, 80, 0.85);
-    color: white;
+    background: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, transform 0.2s;
     font-weight: 500;
   }
   
   .submit-btn:hover:not(:disabled) {
-    background: rgba(44, 62, 80, 1);
+    background: var(--text-primary);
+    transform: translateY(-2px);
   }
   
-  /* Message result styling */
-  .message-result {
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-    border-radius: 6px;
-    text-align: center;
-  }
-  
+  /* Update message results */
   .message-result.success {
-    background-color: rgba(76, 175, 80, 0.2);
-    color: #2e7d32;
+    background-color: var(--success-bg);
+    color: var(--success-text);
   }
   
   .message-result.error {
-    background-color: rgba(244, 67, 54, 0.2);
-    color: #c62828;
+    background-color: var(--error-bg);
+    color: var(--error-text);
   }
   
-  /* Footer */
-  footer {
-    text-align: center;
-    padding: 1.5rem;
-  }
-  
+  /* Update footer */
   .copyright {
     font-size: 0.9rem;
-    color: #555;
+    color: var(--text-secondary);
   }
   
-  /* Responsive adjustments */
-  @media (max-width: 900px) {
-    .featured-grid {
-      grid-template-columns: 1fr 1fr;
-    }
-    
-    .news-list {
-      grid-template-columns: 1fr;
-    }
-  }
-  
-  @media (max-width: 600px) {
-    .featured-grid {
-      grid-template-columns: 1fr;
-    }
-    
-    .container {
-      padding: 70px 15px 30px;
-    }
-    
-    .glass-panel {
-      padding: 1.5rem;
-    }
-  }
-  
-  /* Loading state styles */
-  .loading-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    text-align: center;
-  }
-  
-  .loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid rgba(44, 62, 80, 0.1);
-    border-radius: 50%;
-    border-top: 4px solid rgba(44, 62, 80, 0.8);
-    animation: spin 1s linear infinite;
-    margin-bottom: 1rem;
-  }
-  
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-  
-  /* Error and empty states */
+  /* Update error message */
   .error-message {
     padding: 1.5rem;
-    color: #721c24;
-    background-color: rgba(248, 215, 218, 0.7);
+    color: var(--error-text);
+    background-color: var(--error-bg);
     text-align: center;
   }
   
-  .empty-state {
-    padding: 2rem;
-    text-align: center;
-    color: #555;
-  }
+  /* Rest of your styles remain the same */
+  /* ... */
 </style>

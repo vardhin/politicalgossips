@@ -3,6 +3,8 @@
   import { page } from '$app/stores';
   import { PUBLIC_API_URL } from '$env/static/public';
   import NavBar from './../../lib/components/NavBar.svelte';
+  import { theme } from './../../lib/stores/theme';
+  import './../../lib/styles/theme.css';
   
   // Navigation links for the navbar
   const navLinks = [
@@ -212,24 +214,24 @@
   
   /* Enhanced glassmorphic styles */
   .glass-panel {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--glass-bg);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--card-shadow);
     padding: clamp(1.25rem, 5vw, 2.5rem);
     margin-bottom: clamp(2rem, 5vw, 3rem);
     transition: all 0.3s ease;
   }
   
   .glass-card {
-    background: rgba(255, 255, 255, 0.3);
+    background: var(--glass-card-bg);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--card-shadow);
     overflow: hidden;
     padding: clamp(1.5rem, 5vw, 2.5rem);
     text-align: center;
@@ -238,7 +240,7 @@
   
   .glass-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--card-hover-shadow);
   }
   
   /* Improved article styles */
@@ -262,23 +264,23 @@
   }
   
   .category {
-    color: #2c3e50;
+    color: var(--text-primary);
     font-weight: 600;
     padding: 0.4rem 1rem;
-    background: rgba(44, 62, 80, 0.1);
+    background: var(--category-bg);
     border-radius: 50px;
     transition: background 0.3s ease;
   }
   
   .date {
-    color: #555;
+    color: var(--text-secondary);
     font-weight: 500;
   }
   
   h1 {
     font-size: clamp(1.8rem, 5vw, 2.8rem);
     font-weight: 800;
-    color: #2c3e50;
+    color: var(--text-primary);
     margin-bottom: clamp(1.2rem, 4vw, 2rem);
     line-height: 1.2;
     letter-spacing: -0.02em;
@@ -288,13 +290,13 @@
     margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    box-shadow: var(--card-shadow);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
   
   .article-image-container:hover {
     transform: scale(1.01);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--card-hover-shadow);
   }
   
   .article-image-container img {
@@ -313,8 +315,8 @@
   .article-summary {
     margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
     padding: clamp(1.2rem, 3vw, 1.8rem);
-    background: rgba(44, 62, 80, 0.05);
-    border-left: 5px solid #2c3e50;
+    background: var(--article-summary-bg);
+    border-left: 5px solid var(--article-summary-border);
     border-radius: 0 12px 12px 0;
     transition: background 0.3s ease;
   }
@@ -323,13 +325,13 @@
     font-size: clamp(1.1rem, 3vw, 1.3rem);
     font-weight: 500;
     font-style: italic;
-    color: #2c3e50;
+    color: var(--text-primary);
     line-height: 1.7;
   }
   
   .article-body {
     line-height: 1.9;
-    color: #333;
+    color: var(--text-secondary);
     margin-bottom: clamp(2rem, 5vw, 3rem);
   }
   
@@ -343,7 +345,7 @@
     justify-content: space-between;
     align-items: center;
     padding-top: clamp(1.5rem, 4vw, 2rem);
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    border-top: 1px solid var(--glass-border);
     gap: 1rem;
   }
   
@@ -358,31 +360,31 @@
     cursor: pointer;
     transition: all 0.3s ease;
     text-align: center;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--card-shadow);
   }
   
   .btn-back {
-    background-color: rgba(44, 62, 80, 0.9);
-    color: white;
+    background-color: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
     text-decoration: none;
   }
   
   .btn-back:hover, .btn-back:focus {
-    background-color: #2c3e50;
+    background-color: var(--text-primary);
     transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--card-hover-shadow);
   }
   
   .btn-share {
-    background-color: rgba(76, 175, 80, 0.9);
+    background-color: var(--accent-color);
     color: white;
     border: none;
   }
   
   .btn-share:hover, .btn-share:focus {
-    background-color: #4CAF50;
+    background-color: #3d8b40;
     transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--card-hover-shadow);
   }
   
   /* Focus states for accessibility */
@@ -391,7 +393,7 @@
     outline-offset: 2px;
   }
   
-  /* Improved loading state styles */
+  /* Rest of your styles updated with CSS variables */
   .loading-container {
     display: flex;
     flex-direction: column;
@@ -404,9 +406,9 @@
   .loading-spinner {
     width: clamp(40px, 10vw, 60px);
     height: clamp(40px, 10vw, 60px);
-    border: 5px solid rgba(44, 62, 80, 0.1);
+    border: 5px solid var(--glass-border);
     border-radius: 50%;
-    border-top: 5px solid rgba(44, 62, 80, 0.9);
+    border-top: 5px solid var(--text-primary);
     animation: spin 1s linear infinite;
     margin-bottom: clamp(1.2rem, 4vw, 2rem);
   }
@@ -420,14 +422,14 @@
   .error-message {
     padding: clamp(1.5rem, 5vw, 2.5rem);
     text-align: center;
-    color: #721c24;
+    color: var(--error-text);
     border-radius: 12px;
-    background: rgba(255, 235, 235, 0.7);
+    background: var(--error-bg);
     border: 1px solid rgba(220, 53, 69, 0.3);
   }
   
   .error-message h2 {
-    color: #721c24;
+    color: var(--error-text);
     margin-bottom: 1.2rem;
     font-size: clamp(1.4rem, 4vw, 1.7rem);
   }
@@ -440,7 +442,7 @@
   
   .copyright {
     font-size: 0.95rem;
-    color: #555;
+    color: var(--text-secondary);
     font-weight: 500;
   }
   
@@ -472,62 +474,13 @@
     }
   }
   
-  /* Dark mode support */
-  @media (prefers-color-scheme: dark) {
-    .glass-panel {
-      background: rgba(30, 30, 30, 0.7);
-      border-color: rgba(255, 255, 255, 0.1);
-    }
-    
-    .glass-card {
-      background: rgba(40, 40, 40, 0.8);
-      border-color: rgba(255, 255, 255, 0.1);
-    }
-    
-    h1, .summary-text {
-      color: #eee;
-    }
-    
-    .article-body {
-      color: #ddd;
-    }
-    
-    .category {
-      color: #eee;
-      background: rgba(200, 200, 200, 0.15);
-    }
-    
-    .date, .copyright {
-      color: #bbb;
-    }
-    
-    .article-summary {
-      background: rgba(200, 200, 200, 0.1);
-      border-left-color: #ddd;
-    }
-    
-    .btn-back {
-      background-color: rgba(60, 80, 100, 0.9);
-    }
-    
-    .article-actions {
-      border-top-color: rgba(255, 255, 255, 0.1);
-    }
-    
-    .error-message {
-      background: rgba(80, 30, 30, 0.7);
-      border-color: rgba(220, 53, 69, 0.4);
-      color: #f8d7da;
-    }
-  }
-  
   /* Smooth scrolling and selection styling */
   html {
     scroll-behavior: smooth;
   }
   
   ::selection {
-    background: rgba(44, 62, 80, 0.2);
-    color: inherit;
+    background: var(--category-bg);
+    color: var(--text-primary);
   }
 </style>

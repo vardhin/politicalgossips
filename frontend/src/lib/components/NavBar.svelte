@@ -1,4 +1,5 @@
 <script>
+  import { theme } from '$lib/stores/theme';
   export let brand = "Brand";
   export let links = [];
   export let sticky = true;
@@ -12,6 +13,10 @@
   function closeMenu() {
     isOpen = false;
   }
+
+  function toggleTheme() {
+    theme.toggle();
+  }
 </script>
 
 <nav class:sticky class="navbar">
@@ -20,9 +25,19 @@
       <a href="/" class="brand-link">{brand}</a>
     </div>
     
-    <button class="menu-toggle" on:click={toggleMenu} aria-label="Toggle navigation menu">
-      <span class="hamburger" class:active={isOpen}></span>
-    </button>
+    <div class="nav-controls">
+      <button class="theme-toggle" on:click={toggleTheme} aria-label="Toggle theme">
+        {#if $theme === 'dark'}
+          <span class="icon">☀️</span>
+        {:else}
+          <span class="icon">🌙</span>
+        {/if}
+      </button>
+
+      <button class="menu-toggle" on:click={toggleMenu} aria-label="Toggle navigation menu">
+        <span class="hamburger" class:active={isOpen}></span>
+      </button>
+    </div>
     
     <div class="links" class:open={isOpen}>
       {#each links as link}
@@ -41,11 +56,11 @@
 
 <style>
   .navbar {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--navbar-bg, rgba(255, 255, 255, 0.1));
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid var(--navbar-border, rgba(255, 255, 255, 0.2));
+    box-shadow: 0 4px 15px var(--shadow-color, rgba(0, 0, 0, 0.05));
     padding: 0.8rem 0;
     width: 100%;
     z-index: 1000;
@@ -73,13 +88,36 @@
   }
   
   .brand-link {
-    color: rgba(0, 0, 0, 0.8);
+    color: var(--text-primary, rgba(0, 0, 0, 0.8));
     text-decoration: none;
     transition: color 0.3s;
   }
   
   .brand-link:hover {
-    color: rgba(0, 0, 0, 1);
+    color: var(--text-primary-hover, rgba(0, 0, 0, 1));
+  }
+  
+  .nav-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .theme-toggle {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    padding: 0.3rem;
+    border-radius: 50%;
+    transition: background-color 0.3s;
+  }
+
+  .theme-toggle:hover {
+    background-color: var(--btn-hover-bg, rgba(0, 0, 0, 0.1));
   }
   
   .links {
@@ -89,7 +127,7 @@
   }
   
   .nav-link {
-    color: rgba(0, 0, 0, 0.7);
+    color: var(--text-secondary, rgba(0, 0, 0, 0.7));
     text-decoration: none;
     font-weight: 500;
     position: relative;
@@ -99,7 +137,7 @@
   
   .nav-link:hover,
   .nav-link.active {
-    color: rgba(0, 0, 0, 1);
+    color: var(--text-primary, rgba(0, 0, 0, 1));
   }
   
   .nav-link::after {
@@ -131,7 +169,7 @@
     display: block;
     width: 24px;
     height: 2px;
-    background: rgba(0, 0, 0, 0.8);
+    background: var(--text-primary, rgba(0, 0, 0, 0.8));
     transition: all 0.3s;
   }
   
@@ -142,7 +180,7 @@
     left: 0;
     width: 24px;
     height: 2px;
-    background: rgba(0, 0, 0, 0.8);
+    background: var(--text-primary, rgba(0, 0, 0, 0.8));
     transition: all 0.3s;
   }
   
@@ -179,10 +217,10 @@
       top: 0;
       right: 0;
       flex-direction: column;
-      background: rgba(255, 255, 255, 0.95);
+      background: var(--menu-bg, rgba(255, 255, 255, 0.95));
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      box-shadow: -5px 0 15px rgba(0, 0, 0, 0.05);
+      box-shadow: -5px 0 15px var(--shadow-color, rgba(0, 0, 0, 0.05));
       height: 100vh;
       width: 250px;
       padding: 5rem 2rem 2rem;
