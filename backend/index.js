@@ -381,6 +381,12 @@ app.get('/api/articles/featured', async (req, res) => {
     console.log('Received request for featured articles');
     const limit = parseInt(req.query.limit) || 3;
     const articles = await articleService.getFeaturedArticles(limit);
+    
+    // Debug image info
+    articles.forEach(article => {
+      console.log(`Article ${article.articleId} - Has image: ${!!article.image}, Image content type: ${article.image?.contentType}`);
+    });
+    
     console.log(`Sending ${articles.length} featured articles`);
     res.json(articles);
   } catch (error) {

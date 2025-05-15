@@ -30,6 +30,14 @@
   // Using environment variable for API URL
   const API_URL = PUBLIC_API_URL;
 
+  // Add this near the top of your script section for debugging
+  function debugArticleData(article) {
+    console.log("Article ID:", article.articleId);
+    console.log("Has image property:", !!article.image);
+    console.log("Image property:", article.image);
+    return article;
+  }
+
   // Function to fetch featured articles
   async function fetchFeaturedArticles() {
     try {
@@ -56,14 +64,17 @@
     }
   }
 
-  // Function to handle image URLs with error fallback
+  // Update your getImageUrl function to be more defensive
   function getImageUrl(article) {
     if (!article) return "https://placehold.co/600x400/eee/aaa?text=News";
     
-    if (article.image) {
-      return `${API_URL}/image/${article.articleId}`;
+    // Ensure articleId exists and is valid
+    if (article.articleId || article.id) {
+      const id = article.articleId || article.id;
+      return `${API_URL}/image/${id}`;
     }
     
+    console.warn("Article missing ID:", article);
     return "https://placehold.co/600x400/eee/aaa?text=News";
   }
   
@@ -106,7 +117,7 @@
       ]);
       
       // Format articles to match the expected structure
-      featuredArticles = featured.map(article => ({
+      featuredArticles = featured.map(article => debugArticleData({
         id: article.articleId,
         title: article.title,
         excerpt: article.summary,
