@@ -7,6 +7,8 @@ const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const cors = require('cors');
+const multer = require('multer');
+const upload = multer();
 const articleService = require('./articleService');
 const healthService = require('./healthService');
 
@@ -313,17 +315,36 @@ app.post('/api/auth/refresh', async (req, res) => {
 });
 
 // API Routes
-app.post('/api/articles', authenticate, async (req, res) => {
+app.post('/api/articles', authenticate, upload.single('image'), async (req, res) => {
   try {
     // Check if user has permission (admin or editor)
     if (!['admin', 'editor'].includes(req.user.role)) {
       return res.status(403).json({ message: 'Not authorized' });
     }
     
-    const { title, summary, article_text, date, image, category, featured } = req.body;
-    const article = await articleService.createArticle(title, summary, article_text, date, image, category, featured);
+    // Access form fields from req.body and file from req.file
+    const { title, summary, article_text, date, category, featured } = req.body;
+    
+    if (!req.file) {
+      return res.status(400).json({ error: 'Image file is required' });
+    }
+    
+    // Convert featured from string to boolean if it comes as string
+    const isFeatured = featured === 'true' || featured === true;
+    
+    const article = await articleService.createArticle(
+      title, 
+      summary, 
+      article_text, 
+      date, 
+      req.file, // Pass the entire file object
+      category, 
+      isFeatured
+    );
+    
     res.status(201).json(article);
   } catch (error) {
+    console.error('Error creating article:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -381,6 +402,22 @@ app.get('/api/articles/:id', async (req, res) => {
     }
     
     res.json(article);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/articles/:id/image', async (req, res) => {
+  try {
+    const articleId = parseInt(req.params.id);
+    const article = await articleService.getArticleById(articleId);
+    
+    if (!article || !article.image || !article.image.data) {
+      return res.status(404).json({ error: 'Image not found' });
+    }
+    
+    res.set('Content-Type', article.image.contentType);
+    res.send(article.image.data);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
