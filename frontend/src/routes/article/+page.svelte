@@ -3,6 +3,7 @@
   import { page } from '$app/stores';
   import { PUBLIC_API_URL } from '$env/static/public';
   import NavBar from './../../lib/components/NavBar.svelte';
+  
   // Navigation links for the navbar
   const navLinks = [
     { href: "/", label: "Home", active: false },
@@ -23,7 +24,7 @@
   // Using environment variable for API URL
   const API_URL = PUBLIC_API_URL;
   
-  // Function to get image URL
+  // Improved image URL function
   function getImageUrl(id) {
     if (!id) return "https://placehold.co/800x400/eee/aaa?text=No+Image";
     return `${API_URL}/image/${id}`;
@@ -41,19 +42,31 @@
     });
   }
   
-  // Fetch article data
+  // Enhanced fetch article data function
   async function fetchArticle(id) {
     try {
       loading = true;
       error = null;
       
+      if (!id) {
+        throw new Error('Invalid article ID');
+      }
+      
+      console.log(`Fetching article with ID: ${id}`);
       const response = await fetch(`${API_URL}/articles/${id}`);
       
       if (!response.ok) {
-        throw new Error(`Failed to fetch article: ${response.statusText}`);
+        const status = response.status;
+        if (status === 404) {
+          throw new Error('Article not found');
+        } else {
+          throw new Error(`Failed to fetch article: ${response.statusText || status}`);
+        }
       }
       
-      return await response.json();
+      const data = await response.json();
+      console.log('Received article data:', data);
+      return data;
     } catch (err) {
       console.error('Error fetching article:', err);
       error = err.message || 'Failed to load article';
@@ -63,13 +76,25 @@
     }
   }
   
-  // Load article when component mounts or ID changes
-  $: {
+  // Use onMount to ensure proper initialization
+  onMount(() => {
     if (articleId) {
+      console.log(`Article ID from URL: ${articleId}, slug: ${slug}`);
       fetchArticle(articleId).then(data => {
         article = data;
       });
+    } else {
+      error = 'Article ID is missing';
+      loading = false;
     }
+  });
+  
+  // Watch for URL parameter changes
+  $: if (articleId && !loading) {
+    console.log(`URL parameter changed, fetching article: ${articleId}`);
+    fetchArticle(articleId).then(data => {
+      article = data;
+    });
   }
 </script>
 
@@ -111,16 +136,14 @@
           
           <h1>{article.title}</h1>
           
-          {#if article.image || article.articleId}
-            <div class="article-image-container">
-              <img 
-                src={getImageUrl(article.articleId)} 
-                alt={article.title}
-                crossorigin="anonymous"
-                on:error={(e) => e.target.src = "https://placehold.co/800x400/eee/aaa?text=No+Image"}
-              />
-            </div>
-          {/if}
+          <div class="article-image-container">
+            <img 
+              src={getImageUrl(article.articleId)} 
+              alt={article.title}
+              crossorigin="anonymous"
+              on:error={(e) => e.target.src = "https://placehold.co/800x400/eee/aaa?text=No+Image"}
+            />
+          </div>
           
           <div class="article-summary">
             <p class="summary-text">{article.summary}</p>
@@ -141,7 +164,16 @@
                     title: article.title,
                     text: article.summary,
                     url: window.location.href
-                  })
+                  }).catch(err => console.error('Error sharing:', err));
+                } else {
+                  // Fallback for browsers without share API
+                  const tempInput = document.createElement('input');
+                  document.body.appendChild(tempInput);
+                  tempInput.value = window.location.href;
+                  tempInput.select();
+                  document.execCommand('copy');
+                  document.body.removeChild(tempInput);
+                  alert('Link copied to clipboard!');
                 }
               }}>
                 Share
