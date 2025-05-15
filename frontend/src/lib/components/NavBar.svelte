@@ -1,5 +1,6 @@
 <script>
   import { theme } from '$lib/stores/theme';
+  import { Sun, Moon } from 'lucide-svelte';
   export let brand = "Brand";
   export let links = [];
   export let sticky = true;
@@ -25,20 +26,6 @@
       <a href="/" class="brand-link">{brand}</a>
     </div>
     
-    <div class="nav-controls">
-      <button class="theme-toggle" on:click={toggleTheme} aria-label="Toggle theme">
-        {#if $theme === 'dark'}
-          <span class="icon">☀️</span>
-        {:else}
-          <span class="icon">🌙</span>
-        {/if}
-      </button>
-
-      <button class="menu-toggle" on:click={toggleMenu} aria-label="Toggle navigation menu">
-        <span class="hamburger" class:active={isOpen}></span>
-      </button>
-    </div>
-    
     <div class="links" class:open={isOpen}>
       {#each links as link}
         <a 
@@ -50,6 +37,20 @@
           {link.label}
         </a>
       {/each}
+    </div>
+    
+    <div class="nav-controls">
+      <button class="theme-toggle" on:click={toggleTheme} aria-label="Toggle theme">
+        {#if $theme === 'dark'}
+          <Sun size={20} />
+        {:else}
+          <Moon size={20} />
+        {/if}
+      </button>
+
+      <button class="menu-toggle" on:click={toggleMenu} aria-label="Toggle navigation menu">
+        <span class="hamburger" class:active={isOpen}></span>
+      </button>
     </div>
   </div>
 </nav>
@@ -101,6 +102,7 @@
     display: flex;
     align-items: center;
     gap: 1rem;
+    margin-left: auto;
   }
 
   .theme-toggle {
@@ -110,10 +112,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.3rem;
     padding: 0.3rem;
     border-radius: 50%;
     transition: background-color 0.3s;
+    color: var(--text-primary, rgba(0, 0, 0, 0.8));
   }
 
   .theme-toggle:hover {
@@ -124,6 +126,7 @@
     display: flex;
     gap: 1.5rem;
     align-items: center;
+    margin-right: auto;
   }
   
   .nav-link {
@@ -227,10 +230,15 @@
       transform: translateX(100%);
       transition: transform 0.3s ease-in-out;
       z-index: 10;
+      margin-right: 0;
     }
     
     .links.open {
       transform: translateX(0);
+    }
+
+    .navbar-container {
+      justify-content: space-between;
     }
   }
 </style>
