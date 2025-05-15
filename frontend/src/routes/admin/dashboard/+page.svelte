@@ -12,7 +12,8 @@
   let title = '';
   let summary = '';
   let article_text = '';
-  let image = '';
+  let imageFile = null;
+  let imagePreview = '';
   let category = 'General';
   let featured = false;
   let submitting = false;
@@ -40,30 +41,60 @@
     }
   });
   
+  function handleImageChange(event) {
+    const file = event.target.files[0];
+    if (!file) {
+      imageFile = null;
+      imagePreview = '';
+      return;
+    }
+    
+    // Validate file is an image
+    if (!file.type.match('image.*')) {
+      error = 'Please select an image file';
+      event.target.value = '';
+      return;
+    }
+    
+    // Create preview
+    imageFile = file;
+    const reader = new FileReader();
+    reader.onload = e => {
+      imagePreview = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
     submitting = true;
     submitMessage = '';
     error = '';
     
+    if (!imageFile) {
+      error = 'Please select an image file';
+      submitting = false;
+      return;
+    }
+    
     try {
-      const articleData = {
-        title,
-        summary,
-        article_text,
-        image,
-        category,
-        featured,
-        date: new Date()
-      };
+      // Use FormData for multipart/form-data (file upload)
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('summary', summary);
+      formData.append('article_text', article_text);
+      formData.append('image', imageFile);
+      formData.append('category', category);
+      formData.append('featured', featured);
+      formData.append('date', new Date().toISOString());
       
       const response = await fetch(`${PUBLIC_API_URL}/articles`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          // Don't set Content-Type header, it will be set automatically with boundary
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(articleData)
+        body: formData
       });
       
       const data = await response.json();
@@ -76,9 +107,13 @@
       title = '';
       summary = '';
       article_text = '';
-      image = '';
+      imageFile = null;
+      imagePreview = '';
       category = 'General';
       featured = false;
+      
+      // Reset file input
+      document.getElementById('image-upload').value = '';
       
       submitMessage = 'Article successfully published!';
       
@@ -166,15 +201,20 @@
           </div>
           
           <div class="form-group">
-            <label for="image">Image URL</label>
+            <label for="image-upload">Image Upload</label>
             <input 
-              type="text" 
-              id="image" 
-              bind:value={image} 
+              type="file" 
+              id="image-upload" 
+              accept="image/*"
+              on:change={handleImageChange}
               required 
               disabled={submitting}
-              placeholder="https://example.com/image.jpg"
             />
+            {#if imagePreview}
+              <div class="image-preview">
+                <img src={imagePreview} alt="Preview" />
+              </div>
+            {/if}
           </div>
           
           <div class="form-row">
@@ -366,6 +406,21 @@
     border-top: 4px solid rgba(44, 62, 80, 0.8);
     animation: spin 1s linear infinite;
     margin-bottom: 1rem;
+  }
+  
+  /* Image preview styles */
+  .image-preview {
+    margin-top: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    overflow: hidden;
+    max-width: 300px;
+  }
+  
+  .image-preview img {
+    width: 100%;
+    height: auto;
+    display: block;
   }
   
   @keyframes spin {

@@ -30,8 +30,9 @@ const articleSchema = new mongoose.Schema({
     default: Date.now
   },
   image: {
-    type: String,
-    required: true
+    data: Buffer,
+    contentType: String,
+    filename: String
   },
   category: {
     type: String,
@@ -79,7 +80,11 @@ const createArticle = async (title, summary, article_text, date, image, category
       summary,
       article_text,
       date: articleDate,
-      image,
+      image: {
+        data: image.buffer,
+        contentType: image.mimetype,
+        filename: image.originalname
+      },
       category,
       featured,
       hash
