@@ -60,7 +60,7 @@
   function getImageUrl(article) {
     if (!article) return "https://placehold.co/600x400/eee/aaa?text=News";
     
-    if (article.image && article.image.data) {
+    if (article.image) {
       return `${API_URL}/image/${article.articleId}`;
     }
     
