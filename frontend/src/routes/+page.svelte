@@ -1,9 +1,9 @@
 <script>
   import { onMount } from 'svelte';
-  import NavBar from './../lib/components/NavBar.svelte';
   import { PUBLIC_API_URL } from '$env/static/public';
   import { theme } from './../lib/stores/theme';
   import './../lib/styles/theme.css';
+  import NavBar from './../lib/components/NavBar.svelte';
   
   // Simplified categories
   const categories = ["General", "Political"];
