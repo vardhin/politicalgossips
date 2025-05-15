@@ -455,6 +455,29 @@ app.get('/image/:articleId', async (req, res) => {
   }
 });
 
+// Image endpoint with proper CORS headers
+app.get('/api/image/:articleId', async (req, res) => {
+  try {
+    const { articleId } = req.params;
+    const article = await articleService.getArticleById(parseInt(articleId));
+    
+    if (!article || !article.image || !article.image.data) {
+      return res.status(404).send('Image not found');
+    }
+    
+    // Set proper headers for cross-origin image sharing
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Content-Type', article.image.contentType || 'image/jpeg');
+    res.set('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+    
+    res.send(article.image.data);
+  } catch (error) {
+    console.error('Error serving image:', error);
+    res.status(500).send('Error retrieving image');
+  }
+});
+
 // Root route for basic checks
 app.get('/api', (req, res) => {
   res.status(200).json({ 

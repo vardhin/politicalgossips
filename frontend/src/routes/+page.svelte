@@ -64,7 +64,7 @@
     }
   }
 
-  // Update your getImageUrl function to be more defensive
+  // Update the getImageUrl function to consistently use the API_URL
   function getImageUrl(article) {
     if (!article) return "https://placehold.co/600x400/eee/aaa?text=News";
     
@@ -115,6 +115,12 @@
         fetchFeaturedArticles(),
         fetchLatestArticles()
       ]);
+      
+      // Log raw featured articles from API
+      console.log('Raw featured articles from API:', featured);
+      featured.forEach(article => {
+        console.log(`Article ${article.articleId} has image:`, !!article.image);
+      });
       
       // Format articles to match the expected structure
       featuredArticles = featured.map(article => debugArticleData({
@@ -183,6 +189,7 @@
               <img 
                 src={article.image} 
                 alt={article.title} 
+                crossorigin="anonymous"
                 on:error={(e) => e.target.src = "https://placehold.co/600x400/eee/aaa?text=News"}
               />
               <div class="article-content">
