@@ -30,6 +30,22 @@
   // Using environment variable for API URL
   const API_URL = PUBLIC_API_URL;
 
+  // Function to slugify titles for URLs (handles international characters)
+  function slugify(text) {
+    if (!text) return '';
+    
+    return text
+      .normalize('NFD')
+      // Replace non-alphanumeric characters (except dashes) with dashes
+      .replace(/[^\p{L}\p{N}]+/gu, '-')
+      // Remove consecutive dashes
+      .replace(/-+/g, '-')
+      // Remove dashes from start and end
+      .replace(/^-+|-+$/g, '')
+      // Convert to lowercase
+      .toLowerCase();
+  }
+
   // Add this near the top of your script section for debugging
   function debugArticleData(article) {
     console.log("Article ID:", article.articleId);
@@ -199,7 +215,7 @@
                 </div>
                 <h3>{article.title}</h3>
                 <p>{article.excerpt}</p>
-                <a href={`/article/${article.id}`} class="read-more">Read More</a>
+                <a href={`/article/${article.id}/${slugify(article.title)}`} class="read-more">Read More</a>
               </div>
             </div>
           {/each}
@@ -232,7 +248,7 @@
                 <span class="category">{article.category}</span>
                 <span class="date">{article.date}</span>
               </div>
-              <h3><a href={`/article/${article.id}`}>{article.title}</a></h3>
+              <h3><a href={`/article/${article.id}/${slugify(article.title)}`}>{article.title}</a></h3>
             </div>
           {/each}
         </div>
