@@ -4,7 +4,7 @@
   import { theme } from './../lib/stores/theme';
   import './../lib/styles/theme.css';
   import NavBar from './../lib/components/NavBar.svelte';
-  
+  //hi
   // Simplified categories
   const categories = ["General", "Political"];
   
