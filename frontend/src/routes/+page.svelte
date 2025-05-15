@@ -19,6 +19,13 @@
   let latestNews = [];
   let loading = true;
   let error = null;
+  
+  // Contact form
+  let contactName = '';
+  let contactEmail = '';
+  let contactMessage = '';
+  let contactSubmitting = false;
+  let contactResult = null;
 
   // Using environment variable for API URL
   const API_URL = PUBLIC_API_URL;
@@ -49,6 +56,44 @@
     }
   }
 
+  // Function to handle image URLs with error fallback
+  function getImageUrl(article) {
+    if (!article) return "https://placehold.co/600x400/eee/aaa?text=News";
+    
+    if (article.image && article.image.data) {
+      return `${API_URL}/image/${article.articleId}`;
+    }
+    
+    return "https://placehold.co/600x400/eee/aaa?text=News";
+  }
+  
+  // Function to handle contact form submission
+  async function handleContactSubmit(e) {
+    e.preventDefault();
+    
+    if (contactSubmitting) return;
+    
+    try {
+      contactSubmitting = true;
+      contactResult = null;
+      
+      // In a real app, replace with actual API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Reset form on success
+      contactName = '';
+      contactEmail = '';
+      contactMessage = '';
+      contactResult = { success: true, message: 'Your message has been sent!' };
+      
+    } catch (err) {
+      console.error('Error submitting contact form:', err);
+      contactResult = { success: false, message: 'Failed to send message. Please try again.' };
+    } finally {
+      contactSubmitting = false;
+    }
+  }
+
   // Load data when component mounts
   onMount(async () => {
     try {
@@ -65,9 +110,7 @@
         id: article.articleId,
         title: article.title,
         excerpt: article.summary,
-        image: article.image && article.image.data 
-          ? `${API_URL}/image/${article.articleId}` 
-          : "https://placehold.co/600x400/eee/aaa?text=News",
+        image: getImageUrl(article),
         category: article.category,
         date: new Date(article.date).toLocaleDateString('en-US', {
           year: 'numeric',
@@ -126,7 +169,11 @@
         <div class="featured-grid">
           {#each featuredArticles as article}
             <div class="article-card glass-card">
-              <img src={article.image} alt={article.title} />
+              <img 
+                src={article.image} 
+                alt={article.title} 
+                on:error={(e) => e.target.src = "https://placehold.co/600x400/eee/aaa?text=News"}
+              />
               <div class="article-content">
                 <div class="article-meta">
                   <span class="category">{article.category}</span>
@@ -179,17 +226,48 @@
       <h2>Contact Us</h2>
       <div class="contact-content glass-card">
         <p>Have a tip or feedback? We'd love to hear from you.</p>
-        <form class="contact-form">
+        
+        {#if contactResult}
+          <div class="message-result {contactResult.success ? 'success' : 'error'}">
+            {contactResult.message}
+          </div>
+        {/if}
+        
+        <form class="contact-form" on:submit={handleContactSubmit}>
           <div class="form-group">
-            <input type="text" placeholder="Your Name" required />
+            <input 
+              type="text" 
+              placeholder="Your Name" 
+              required
+              bind:value={contactName}
+              disabled={contactSubmitting}
+            />
           </div>
           <div class="form-group">
-            <input type="email" placeholder="Your Email" required />
+            <input 
+              type="email" 
+              placeholder="Your Email" 
+              required
+              bind:value={contactEmail}
+              disabled={contactSubmitting}
+            />
           </div>
           <div class="form-group">
-            <textarea placeholder="Your Message" rows="4" required></textarea>
+            <textarea 
+              placeholder="Your Message" 
+              rows="4" 
+              required
+              bind:value={contactMessage}
+              disabled={contactSubmitting}
+            ></textarea>
           </div>
-          <button type="submit" class="submit-btn">Send Message</button>
+          <button 
+            type="submit" 
+            class="submit-btn"
+            disabled={contactSubmitting}
+          >
+            {contactSubmitting ? 'Sending...' : 'Send Message'}
+          </button>
         </form>
       </div>
     </section>
@@ -387,6 +465,14 @@
     border-color: rgba(44, 62, 80, 0.5);
   }
   
+  /* Disabled form elements */
+  .form-group input:disabled,
+  .form-group textarea:disabled,
+  .submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+  
   .submit-btn {
     padding: 0.8rem 1.5rem;
     background: rgba(44, 62, 80, 0.85);
@@ -398,8 +484,26 @@
     font-weight: 500;
   }
   
-  .submit-btn:hover {
+  .submit-btn:hover:not(:disabled) {
     background: rgba(44, 62, 80, 1);
+  }
+  
+  /* Message result styling */
+  .message-result {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 6px;
+    text-align: center;
+  }
+  
+  .message-result.success {
+    background-color: rgba(76, 175, 80, 0.2);
+    color: #2e7d32;
+  }
+  
+  .message-result.error {
+    background-color: rgba(244, 67, 54, 0.2);
+    color: #c62828;
   }
   
   /* Footer */
