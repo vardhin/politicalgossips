@@ -26,20 +26,7 @@
       <a href="/" class="brand-link">{brand}</a>
     </div>
     
-    <div class="links" class:open={isOpen}>
-      {#each links as link}
-        <a 
-          href={link.href} 
-          class="nav-link"
-          class:active={link.active} 
-          on:click={closeMenu}
-        >
-          {link.label}
-        </a>
-      {/each}
-    </div>
-    
-    <div class="nav-controls">
+    <div class="right-section">
       <button class="theme-toggle" on:click={toggleTheme} aria-label="Toggle theme">
         {#if $theme === 'dark'}
           <Sun size={20} />
@@ -47,7 +34,20 @@
           <Moon size={20} />
         {/if}
       </button>
-
+      
+      <div class="links" class:open={isOpen}>
+        {#each links as link}
+          <a 
+            href={link.href} 
+            class="nav-link"
+            class:active={link.active} 
+            on:click={closeMenu}
+          >
+            {link.label}
+          </a>
+        {/each}
+      </div>
+      
       <button class="menu-toggle" on:click={toggleMenu} aria-label="Toggle navigation menu">
         <span class="hamburger" class:active={isOpen}></span>
       </button>
@@ -98,13 +98,12 @@
     color: var(--text-primary-hover, rgba(0, 0, 0, 1));
   }
   
-  .nav-controls {
+  .right-section {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    margin-left: auto;
+    gap: 1.5rem;
   }
-
+  
   .theme-toggle {
     background: transparent;
     border: none;
@@ -126,7 +125,8 @@
     display: flex;
     gap: 1.5rem;
     align-items: center;
-    margin-right: auto;
+    margin-right: 0;
+    margin-left: 0;
   }
   
   .nav-link {
@@ -237,8 +237,8 @@
       transform: translateX(0);
     }
 
-    .navbar-container {
-      justify-content: space-between;
+    .right-section {
+      gap: 1rem;
     }
   }
 </style>
