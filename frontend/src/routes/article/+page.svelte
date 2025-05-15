@@ -76,12 +76,16 @@
     }
   }
   
+  // Add a tracking variable
+  let currentlyLoadedId = null;
+
   // Use onMount to ensure proper initialization
   onMount(() => {
     console.log("URL Search params:", $page.url.searchParams.toString());
     
     if (articleId) {
       console.log(`Article ID from URL: ${articleId}, slug: ${slug}`);
+      currentlyLoadedId = articleId;
       fetchArticle(articleId).then(data => {
         article = data;
       });
@@ -92,8 +96,9 @@
   });
   
   // Watch for URL parameter changes
-  $: if (articleId && !loading) {
+  $: if (articleId && !loading && articleId !== currentlyLoadedId) {
     console.log(`URL parameter changed, fetching article: ${articleId}`);
+    currentlyLoadedId = articleId;
     fetchArticle(articleId).then(data => {
       article = data;
     });
