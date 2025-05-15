@@ -65,7 +65,9 @@
         id: article.articleId,
         title: article.title,
         excerpt: article.summary,
-        image: article.image || "https://placehold.co/600x400/eee/aaa?text=News",
+        image: article.image && article.image.data 
+          ? `${API_URL}/image/${article.articleId}` 
+          : "https://placehold.co/600x400/eee/aaa?text=News",
         category: article.category,
         date: new Date(article.date).toLocaleDateString('en-US', {
           year: 'numeric',

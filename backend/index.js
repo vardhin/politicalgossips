@@ -423,6 +423,22 @@ app.get('/api/articles/:id/image', async (req, res) => {
   }
 });
 
+// Image endpoint
+app.get('/image/:articleId', async (req, res) => {
+  try {
+    const article = await articleService.getArticleById(parseInt(req.params.articleId));
+    if (!article || !article.image || !article.image.data) {
+      return res.status(404).send('Image not found');
+    }
+    
+    res.set('Content-Type', article.image.contentType);
+    return res.send(article.image.data);
+  } catch (error) {
+    console.error('Error serving image:', error);
+    return res.status(500).send('Error serving image');
+  }
+});
+
 // Root route for basic checks
 app.get('/api', (req, res) => {
   res.status(200).json({ 
