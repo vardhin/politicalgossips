@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { PUBLIC_API_URL } from '$env/static/public';
-  import NavBar from '$lib/NavBar.svelte';
+  import NavBar from './../../lib/components/NavBar.svelte';
   // Navigation links for the navbar
   const navLinks = [
     { href: "/", label: "Home", active: false },
