@@ -215,7 +215,7 @@
                 </div>
                 <h3>{article.title}</h3>
                 <p>{article.excerpt}</p>
-                <a href={`/article/${article.id}/${slugify(article.title)}`} class="read-more">Read More</a>
+                <a href={`/article?id=${article.id}&slug=${slugify(article.title)}`} class="read-more">Read More</a>
               </div>
             </div>
           {/each}
@@ -248,7 +248,7 @@
                 <span class="category">{article.category}</span>
                 <span class="date">{article.date}</span>
               </div>
-              <h3><a href={`/article/${article.id}/${slugify(article.title)}`}>{article.title}</a></h3>
+              <h3><a href={`/article?id=${article.id}&slug=${slugify(article.title)}`}>{article.title}</a></h3>
             </div>
           {/each}
         </div>

@@ -17,9 +17,9 @@
   let loading = true;
   let error = null;
   
-  // Get article ID from URL parameters
-  $: articleId = $page.params.id;
-  $: slug = $page.params.slug;
+  // Get article ID from URL query parameters instead of path params
+  $: articleId = $page.url.searchParams.get('id');
+  $: slug = $page.url.searchParams.get('slug');
   
   // Using environment variable for API URL
   const API_URL = PUBLIC_API_URL;
@@ -78,6 +78,8 @@
   
   // Use onMount to ensure proper initialization
   onMount(() => {
+    console.log("URL Search params:", $page.url.searchParams.toString());
+    
     if (articleId) {
       console.log(`Article ID from URL: ${articleId}, slug: ${slug}`);
       fetchArticle(articleId).then(data => {
