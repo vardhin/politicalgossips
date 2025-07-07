@@ -522,3 +522,45 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Export for serverless use
 module.exports = app;
+
+// Add this new PUT endpoint after your existing article routes (around line 350)
+app.put('/api/articles/:id', authenticate, upload.single('image'), async (req, res) => {
+  try {
+    // Check if user has admin permission for updates
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Admin access required for updating articles' });
+    }
+    
+    const articleId = parseInt(req.params.id);
+    const { title, summary, article_text, date, category, featured } = req.body;
+    
+    // Check if article exists
+    const existingArticle = await articleService.getArticleById(articleId);
+    if (!existingArticle) {
+      return res.status(404).json({ error: 'Article not found' });
+    }
+    
+    // Convert featured from string to boolean if it comes as string
+    const isFeatured = featured === 'true' || featured === true || featured === 'on';
+    
+    // Update the article
+    const updatedArticle = await articleService.updateArticle(
+      articleId,
+      title,
+      summary,
+      article_text,
+      date,
+      req.file, // This will be null if no new image is uploaded
+      category,
+      isFeatured
+    );
+    
+    res.json({
+      message: 'Article updated successfully',
+      article: updatedArticle
+    });
+  } catch (error) {
+    console.error('Error updating article:', error);
+    res.status(500).json({ error: error.message });
+  }
+});

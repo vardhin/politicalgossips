@@ -98,6 +98,69 @@ const createArticle = async (title, summary, article_text, date, image, category
   }
 };
 
+// Update an existing article
+const updateArticle = async (articleId, title, summary, article_text, date, image, category, featured = false) => {
+  try {
+    console.log(`Updating article ${articleId} with data:`, { title, summary, category, featured });
+    
+    // Find the existing article
+    const existingArticle = await Article.findOne({ articleId });
+    if (!existingArticle) {
+      throw new Error('Article not found');
+    }
+    
+    // Prepare update data
+    const updateData = {
+      title: title || existingArticle.title,
+      summary: summary || existingArticle.summary,
+      article_text: article_text || existingArticle.article_text,
+      category: category || existingArticle.category,
+      featured: featured !== undefined ? featured : existingArticle.featured
+    };
+    
+    // Handle date update
+    if (date) {
+      updateData.date = new Date(date);
+    }
+    
+    // Handle image update (only if new image is provided)
+    if (image && image.buffer) {
+      updateData.image = {
+        data: image.buffer,
+        contentType: image.mimetype,
+        filename: image.originalname || `article_${articleId}_${Date.now()}`
+      };
+      console.log('Updating image for article:', articleId);
+    }
+    
+    // Generate new hash if title or date changed
+    if (title || date) {
+      const hashDate = updateData.date || existingArticle.date;
+      updateData.hash = generateHash(updateData.title, hashDate);
+    }
+    
+    // Update the article
+    const updatedArticle = await Article.findOneAndUpdate(
+      { articleId },
+      updateData,
+      { 
+        new: true, // Return the updated document
+        runValidators: true // Run schema validators
+      }
+    );
+    
+    if (!updatedArticle) {
+      throw new Error('Failed to update article');
+    }
+    
+    console.log(`Successfully updated article ${articleId}`);
+    return updatedArticle;
+  } catch (error) {
+    console.error('Error updating article:', error);
+    throw error;
+  }
+};
+
 // Fetch latest articles
 const getLatestArticles = async (limit = 10) => {
   try {
@@ -153,6 +216,7 @@ const getArticleById = async (articleId) => {
 module.exports = {
   Article,
   createArticle,
+  updateArticle,  // Add this export
   getLatestArticles,
   getArticlesByCategory,
   getFeaturedArticles,
