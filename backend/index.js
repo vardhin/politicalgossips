@@ -604,3 +604,121 @@ app.delete('/api/articles/:id', authenticate, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Contact form schema
+const contactSubmissionSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    default: 'Anonymous'
+  },
+  email: {
+    type: String,
+    default: 'No contact provided'
+  },
+  message: {
+    type: String,
+    required: true
+  },
+  timestamp: {
+    type: Date,
+    default: Date.now
+  },
+  ipAddress: {
+    type: String
+  },
+  userAgent: {
+    type: String
+  }
+});
+
+const ContactSubmission = mongoose.model('ContactSubmission', contactSubmissionSchema);
+
+// Rate limiter for contact form
+const contactLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 3, // 3 submissions per 15 minutes per IP
+  message: {
+    error: 'Too many contact form submissions. Please try again later.',
+    retryAfter: '15 minutes'
+  }
+});
+
+// Contact form endpoint - just store in database
+app.post('/api/contact', contactLimiter, async (req, res) => {
+  try {
+    const { name, email, message } = req.body;
+
+    // Validate required fields
+    if (!message || !message.trim()) {
+      return res.status(400).json({
+        error: 'Message is required'
+      });
+    }
+
+    // Get client IP and User Agent for security logging
+    const ipAddress = req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'];
+    const userAgent = req.headers['user-agent'];
+
+    // Create and save submission
+    const submission = new ContactSubmission({
+      name: name?.trim() || 'Anonymous',
+      email: email?.trim() || 'No contact provided',
+      message: message.trim(),
+      ipAddress,
+      userAgent,
+      timestamp: new Date()
+    });
+
+    await submission.save();
+
+    console.log(`Contact form submission saved: ${submission._id} from ${submission.name}`);
+
+    res.status(200).json({
+      success: true,
+      message: 'Your message has been received securely. We will review it and respond if necessary.',
+      submissionId: submission._id
+    });
+
+  } catch (error) {
+    console.error('Contact form submission error:', error);
+    
+    res.status(500).json({
+      error: 'Failed to process your submission. Please try again later.'
+    });
+  }
+});
+
+// Admin endpoint to view contact submissions
+app.get('/api/admin/contact-submissions', authenticate, async (req, res) => {
+  try {
+    // Check if user has admin permission
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Admin access required' });
+    }
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const submissions = await ContactSubmission.find()
+      .sort({ timestamp: -1 })
+      .skip(skip)
+      .limit(limit)
+      .select('-__v');
+
+    const total = await ContactSubmission.countDocuments();
+
+    res.json({
+      submissions,
+      pagination: {
+        current: page,
+        pages: Math.ceil(total / limit),
+        total
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching contact submissions:', error);
+    res.status(500).json({ error: error.message });
+  }
+});

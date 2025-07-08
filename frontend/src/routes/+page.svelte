@@ -21,13 +21,6 @@
   let latestNews = [];
   let loading = true;
   let error = null;
-  
-  // Contact form
-  let contactName = '';
-  let contactEmail = '';
-  let contactMessage = '';
-  let contactSubmitting = false;
-  let contactResult = null;
 
   // Using environment variable for API URL
   const API_URL = PUBLIC_API_URL;
@@ -114,33 +107,6 @@
     
     return (lastSpace > 0 ? truncated.substring(0, lastSpace) : truncated) + '...';
   }
-  
-  // Function to handle contact form submission
-  async function handleContactSubmit(e) {
-    e.preventDefault();
-    
-    if (contactSubmitting) return;
-    
-    try {
-      contactSubmitting = true;
-      contactResult = null;
-      
-      // In a real app, replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Reset form on success
-      contactName = '';
-      contactEmail = '';
-      contactMessage = '';
-      contactResult = { success: true, message: 'Your message has been sent!' };
-      
-    } catch (err) {
-      console.error('Error submitting contact form:', err);
-      contactResult = { success: false, message: 'Failed to send message. Please try again.' };
-    } finally {
-      contactSubmitting = false;
-    }
-  }
 
   // Load data when component mounts
   onMount(async () => {
@@ -199,6 +165,7 @@
 
 <svelte:head>
   <title>Political Gossips - Latest Political News and Analysis</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </svelte:head>
 
 <div class="site-wrapper" class:dark={$theme === 'dark'}>
@@ -216,7 +183,7 @@
                 src={featuredArticles[0].image} 
                 alt={featuredArticles[0].title}
                 class="hero-image"
-                on:error={(e) => e.target.src = "https://placehold.co/600x400/2c2c2c/ffffff?text=INVESTIGATION"}
+                on:error={(e) => e.target.src = "https://placehold.co/600x400/2c2c2c/ffffff?text=NEWS"}
               />
             </div>
             <div class="hero-text-content">
@@ -333,83 +300,6 @@
         </section>
       </aside>
     </div>
-
-    <!-- Contact Section -->
-    <section class="contact-section">
-      <div class="section-header">
-        <h2 class="section-title">CONTACT US</h2>
-        <div class="section-divider"></div>
-      </div>
-      
-      <div class="contact-container">
-        <div class="contact-info">
-          <h3>Confidential Sources</h3>
-          <p>Our investigative team is committed to protecting whistleblowers and sources. All communications are handled with the highest level of security and confidentiality.</p>
-          <div class="contact-methods">
-            <div class="contact-method">
-              <strong>Encrypted Email:</strong> investigations@politicalgossips.com
-            </div>
-            <div class="contact-method">
-              <strong>Secure Line:</strong> +1 (555) 123-TIPS
-            </div>
-            <div class="contact-method">
-              <strong>Signal:</strong> +1 (555) 123-7477
-            </div>
-          </div>
-        </div>
-        
-        <div class="contact-form-container">
-          {#if contactResult}
-            <div class="message-result {contactResult.success ? 'success' : 'error'}">
-              {contactResult.message}
-            </div>
-          {/if}
-          
-          <form class="contact-form" on:submit={handleContactSubmit}>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="name">Name (Optional)</label>
-                <input 
-                  type="text" 
-                  id="name"
-                  bind:value={contactName}
-                  disabled={contactSubmitting}
-                  placeholder="Anonymous allowed"
-                />
-              </div>
-              <div class="form-group">
-                <label for="email">Contact (Optional)</label>
-                <input 
-                  type="email" 
-                  id="email"
-                  bind:value={contactEmail}
-                  disabled={contactSubmitting}
-                  placeholder="For follow-up only"
-                />
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="message">Information</label>
-              <textarea 
-                id="message"
-                rows="6" 
-                required
-                bind:value={contactMessage}
-                disabled={contactSubmitting}
-                placeholder="Describe the situation, provide evidence details, or share your concerns..."
-              ></textarea>
-            </div>
-            <button 
-              type="submit" 
-              class="submit-btn"
-              disabled={contactSubmitting}
-            >
-              {contactSubmitting ? 'SENDING...' : 'SUBMIT INFORMATION'}
-            </button>
-          </form>
-        </div>
-      </div>
-    </section>
   </main>
 
   <footer class="site-footer">
@@ -419,11 +309,11 @@
         <p>Independent investigative journalism exposing political corruption and holding power accountable.</p>
       </div>
       <div class="footer-section">
-        <h4>Investigations</h4>
+        <h4>News</h4>
         <ul class="footer-links">
           <li><a href="/category/political">Political Corruption</a></li>
           <li><a href="/category/general">Government Oversight</a></li>
-          <li><a href="/archives">Investigation Archives</a></li>
+          <li><a href="/archives">News Archives</a></li>
           <li><a href="/methodology">Our Methods</a></li>
         </ul>
       </div>
@@ -445,6 +335,7 @@
   </footer>
 </div>
 
+<!-- Removed contact-related styles and kept all other styles intact -->
 <style>
   /* Global Styles - More serious typography */
   :global(body) {
@@ -457,6 +348,8 @@
     background-color: #fafafa;
     color: #1a1a1a;
     font-weight: 400;
+    /* Prevent horizontal scrolling */
+    overflow-x: hidden;
   }
 
   /* Dark theme for body */
@@ -494,6 +387,8 @@
     flex-direction: column;
     padding-top: 80px;
     transition: all 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   /* Dark theme overrides */
@@ -521,27 +416,30 @@
     max-width: 1200px;
     margin: 0 auto;
     width: 100%;
-    padding: 0 20px;
+    padding: 0 15px;
+    box-sizing: border-box;
   }
 
-  /* Hero Section - More newspaper-like */
+  /* Hero Section - Mobile optimized */
   .hero-section {
-    margin: 20px 0 40px;
+    margin: 20px 0 30px;
     border-bottom: 3px solid var(--accent-color);
-    padding-bottom: 30px;
+    padding-bottom: 20px;
   }
 
   .hero-article {
     background: var(--bg-primary);
     border: 1px solid var(--border-color);
     box-shadow: 0 2px 10px var(--shadow-light);
+    border-radius: 0;
+    overflow: hidden;
   }
 
   .hero-content-wrapper {
     display: grid;
     grid-template-columns: 1fr 1.5fr;
     gap: 0;
-    min-height: 400px;
+    min-height: 350px;
   }
 
   .hero-image-container {
@@ -551,7 +449,7 @@
   }
 
   .hero-text-content {
-    padding: 40px;
+    padding: 30px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -562,11 +460,11 @@
     display: inline-block;
     background: var(--accent-color);
     color: white;
-    padding: 8px 16px;
-    font-size: 12px;
+    padding: 6px 12px;
+    font-size: 11px;
     font-weight: 900;
-    letter-spacing: 2px;
-    margin-bottom: 15px;
+    letter-spacing: 1.5px;
+    margin-bottom: 12px;
     width: fit-content;
     animation: pulse 2s infinite;
   }
@@ -579,39 +477,40 @@
   .hero-category {
     display: block;
     color: var(--text-secondary);
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 1px;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
   }
 
   .hero-title {
-    font-size: 2.2rem;
+    font-size: 1.8rem;
     font-weight: 700;
     color: var(--text-primary);
-    margin: 0 0 20px;
+    margin: 0 0 15px;
     line-height: 1.2;
     letter-spacing: -0.5px;
   }
 
   .hero-excerpt {
-    font-size: 1.1rem;
+    font-size: 1rem;
     color: var(--text-secondary);
-    margin: 0 0 25px;
-    line-height: 1.6;
+    margin: 0 0 20px;
+    line-height: 1.5;
   }
 
   .hero-meta {
     display: flex;
     align-items: center;
-    gap: 25px;
+    gap: 20px;
     margin-top: auto;
+    flex-wrap: wrap;
   }
 
   .hero-date {
     color: var(--text-tertiary);
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -620,14 +519,15 @@
   .hero-cta {
     background: var(--text-primary);
     color: var(--bg-primary);
-    padding: 12px 24px;
+    padding: 10px 20px;
     text-decoration: none;
     font-weight: 700;
-    font-size: 13px;
+    font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 1px;
     transition: all 0.3s ease;
     border: 2px solid var(--text-primary);
+    white-space: nowrap;
   }
 
   .hero-cta:hover {
@@ -643,46 +543,46 @@
     filter: grayscale(20%);
   }
 
-  /* Content Grid */
+  /* Content Grid - Mobile responsive */
   .content-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 50px;
-    margin-bottom: 50px;
+    grid-template-columns: 1fr;
+    gap: 30px;
+    margin-bottom: 40px;
   }
 
-  /* Section Headers - More authoritative */
+  /* Section Headers */
   .section-header {
-    margin-bottom: 30px;
+    margin-bottom: 25px;
     border-bottom: 2px solid var(--border-color);
-    padding-bottom: 15px;
+    padding-bottom: 12px;
   }
 
   .section-title {
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     font-weight: 800;
     color: var(--text-primary);
     margin: 0;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 1.5px;
   }
 
   .section-divider {
-    width: 80px;
+    width: 60px;
     height: 3px;
     background: var(--accent-color);
     border: none;
-    margin-top: 10px;
+    margin-top: 8px;
   }
 
-  /* Featured Grid - New mini hero card style */
+  /* Featured Grid - Mobile first */
   .featured-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 30px;
+    grid-template-columns: 1fr;
+    gap: 20px;
   }
 
-  /* News Cards - Mini hero card style */
+  /* News Cards - Mobile optimized */
   .news-card {
     background: var(--bg-primary);
     border: 1px solid var(--border-color);
@@ -693,20 +593,16 @@
 
   .news-card:hover {
     box-shadow: 0 4px 15px var(--shadow-medium);
-    transform: translateY(-2px);
   }
 
   .news-card-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0;
-    min-height: 180px;
+    display: block;
   }
 
   .news-image-container {
     position: relative;
     overflow: hidden;
-    order: 1;
+    height: 200px;
   }
 
   .news-image {
@@ -724,20 +620,20 @@
 
   .news-overlay {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.7));
+    top: 15px;
+    left: 15px;
+    right: auto;
+    bottom: auto;
+    background: none;
     display: flex;
-    align-items: flex-end;
-    padding: 10px;
+    align-items: flex-start;
+    padding: 0;
   }
 
   .news-category {
-    background: rgba(255, 255, 255, 0.9);
-    color: var(--text-primary);
-    padding: 4px 8px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 6px 12px;
     font-size: 10px;
     font-weight: 700;
     text-transform: uppercase;
@@ -746,15 +642,11 @@
 
   .news-content {
     padding: 20px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    order: 2;
   }
 
   .news-title {
-    margin: 0 0 10px;
-    font-size: 1rem;
+    margin: 0 0 12px;
+    font-size: 1.1rem;
     font-weight: 600;
     line-height: 1.3;
   }
@@ -772,9 +664,8 @@
   .news-excerpt {
     color: var(--text-secondary);
     margin: 0 0 15px;
-    font-size: 0.85rem;
-    line-height: 1.4;
-    flex: 1;
+    font-size: 0.9rem;
+    line-height: 1.5;
   }
 
   .news-meta {
@@ -782,11 +673,10 @@
     align-items: center;
     justify-content: space-between;
     border-top: 1px solid var(--border-light);
-    padding-top: 10px;
+    padding-top: 12px;
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-top: auto;
   }
 
   .news-date {
@@ -799,15 +689,16 @@
     font-weight: 500;
   }
 
-  /* Sidebar - More serious styling */
+  /* Sidebar - Mobile optimized */
   .sidebar {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     height: fit-content;
+    order: -1;
   }
 
   .sidebar-section {
-    padding: 30px;
+    padding: 25px 20px;
     border-bottom: 1px solid var(--border-color);
   }
 
@@ -819,7 +710,7 @@
     font-size: 1rem;
     font-weight: 800;
     color: var(--text-primary);
-    margin: 0 0 10px;
+    margin: 0 0 15px;
     text-transform: uppercase;
     letter-spacing: 1px;
   }
@@ -831,7 +722,7 @@
 
   .tips-content p {
     color: var(--text-secondary);
-    margin: 0 0 20px;
+    margin: 0 0 15px;
     font-size: 0.9rem;
     line-height: 1.5;
   }
@@ -847,6 +738,9 @@
     text-transform: uppercase;
     letter-spacing: 1px;
     transition: background-color 0.3s ease;
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
   }
 
   .tips-button:hover {
@@ -857,11 +751,11 @@
   .sidebar-news-list {
     display: flex;
     flex-direction: column;
-    gap: 25px;
+    gap: 20px;
   }
 
   .sidebar-news-item {
-    padding-bottom: 25px;
+    padding-bottom: 20px;
     border-bottom: 1px solid var(--border-light);
   }
 
@@ -873,8 +767,9 @@
   .sidebar-news-meta {
     display: flex;
     align-items: center;
-    gap: 15px;
-    margin-bottom: 10px;
+    gap: 12px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
   }
 
   .sidebar-category {
@@ -895,7 +790,7 @@
   }
 
   .sidebar-news-title {
-    margin: 0 0 10px;
+    margin: 0 0 8px;
     font-size: 0.95rem;
     font-weight: 600;
     line-height: 1.3;
@@ -918,150 +813,11 @@
     margin: 0;
   }
 
-  /* Contact Section - More professional */
-  .contact-section {
-    background: var(--bg-secondary);
-    padding: 50px 40px;
-    margin: 50px 0;
-    border: 1px solid var(--border-color);
-    border-top: 3px solid var(--accent-color);
-  }
-
-  .contact-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 50px;
-    margin-top: 30px;
-  }
-
-  .contact-info h3 {
-    font-size: 1.3rem;
-    font-weight: 700;
-    margin: 0 0 15px;
-    color: var(--text-primary);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-
-  .contact-info p {
-    color: var(--text-secondary);
-    margin: 0 0 25px;
-    line-height: 1.6;
-    font-size: 0.95rem;
-  }
-
-  .contact-methods {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .contact-method {
-    color: var(--text-primary);
-    font-size: 0.9rem;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--border-light);
-  }
-
-  .contact-method strong {
-    color: var(--accent-color);
-    font-weight: 600;
-  }
-
-  /* Contact Form - More secure looking */
-  .contact-form {
-    display: flex;
-    flex-direction: column;
-    gap: 25px;
-  }
-
-  .form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-  }
-
-  .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .form-group label {
-    font-weight: 600;
-    color: var(--text-primary);
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .form-group input,
-  .form-group textarea {
-    padding: 14px;
-    border: 2px solid var(--border-color);
-    font-size: 14px;
-    font-family: inherit;
-    transition: border-color 0.3s ease;
-    background: var(--bg-primary);
-    color: var(--text-primary);
-  }
-
-  .form-group input:focus,
-  .form-group textarea:focus {
-    outline: none;
-    border-color: var(--accent-color);
-  }
-
-  .submit-btn {
-    background: var(--text-primary);
-    color: var(--bg-primary);
-    border: none;
-    padding: 18px 35px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-size: 13px;
-    align-self: flex-start;
-  }
-
-  .submit-btn:hover:not(:disabled) {
-    background: var(--accent-color);
-  }
-
-  .submit-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  /* Message Results */
-  .message-result {
-    padding: 20px;
-    margin-bottom: 25px;
-    font-weight: 500;
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .message-result.success {
-    background: var(--success-bg);
-    color: var(--success-text);
-    border-left: 4px solid var(--success-border);
-  }
-
-  .message-result.error {
-    background: var(--error-bg);
-    color: var(--error-text);
-    border-left: 4px solid var(--error-border);
-  }
-
-  /* Footer - More authoritative */
+  /* Footer - Mobile optimized */
   .site-footer {
     background: var(--bg-tertiary);
     color: var(--text-primary);
-    padding: 50px 0 25px;
+    padding: 40px 0 20px;
     margin-top: auto;
     border-top: 3px solid var(--accent-color);
   }
@@ -1069,16 +825,16 @@
   .footer-content {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 15px;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 40px;
+    grid-template-columns: 1fr;
+    gap: 30px;
   }
 
   .footer-section h4 {
     font-size: 1rem;
     font-weight: 800;
-    margin: 0 0 20px;
+    margin: 0 0 15px;
     color: var(--text-primary);
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -1098,7 +854,7 @@
   }
 
   .footer-links li {
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
 
   .footer-links a {
@@ -1115,8 +871,8 @@
 
   .footer-bottom {
     border-top: 1px solid var(--border-color);
-    margin-top: 40px;
-    padding-top: 25px;
+    margin-top: 30px;
+    padding-top: 20px;
     text-align: center;
   }
 
@@ -1124,6 +880,7 @@
     color: var(--text-tertiary);
     font-size: 0.85rem;
     font-weight: 500;
+    padding: 0 10px;
   }
 
   /* Loading States */
@@ -1132,18 +889,18 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 80px 20px;
+    padding: 60px 20px;
     text-align: center;
   }
 
   .loading-spinner {
-    width: 40px;
-    height: 40px;
+    width: 35px;
+    height: 35px;
     border: 3px solid var(--border-color);
     border-radius: 50%;
     border-top-color: var(--accent-color);
     animation: spin 1s ease-in-out infinite;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
   }
 
   @keyframes spin {
@@ -1153,27 +910,28 @@
   .error-message {
     background: var(--error-bg);
     color: var(--error-text);
-    padding: 40px;
+    padding: 30px 20px;
     border-left: 4px solid var(--error-border);
     text-align: center;
+    margin: 20px 0;
   }
 
   .error-message h3 {
-    margin: 0 0 15px;
-    font-size: 1.2rem;
+    margin: 0 0 12px;
+    font-size: 1.1rem;
     font-weight: 700;
     text-transform: uppercase;
   }
 
   .empty-state {
     background: var(--bg-secondary);
-    padding: 50px;
+    padding: 40px 20px;
     border: 1px solid var(--border-color);
     text-align: center;
   }
 
   .empty-state h3 {
-    margin: 0 0 15px;
+    margin: 0 0 12px;
     color: var(--text-primary);
     font-weight: 700;
     text-transform: uppercase;
@@ -1184,48 +942,206 @@
     margin: 0;
   }
 
-  /* Responsive Design Updates */
-  @media (max-width: 768px) {
-    .hero-content-wrapper {
-      grid-template-columns: 1fr;
+  /* Tablet Responsive Design */
+  @media (min-width: 768px) {
+    .main-content {
+      padding: 0 30px;
     }
 
-    .hero-image-container {
-      order: 1;
-      min-height: 200px;
+    .content-grid {
+      grid-template-columns: 2fr 1fr;
+      gap: 40px;
     }
 
-    .hero-text-content {
-      order: 2;
-      padding: 30px 25px;
+    .sidebar {
+      order: 0;
     }
 
     .featured-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 25px;
     }
 
     .news-card-content {
-      grid-template-columns: 1fr;
-      min-height: auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      min-height: 180px;
     }
 
     .news-image-container {
+      height: auto;
       order: 1;
-      min-height: 150px;
     }
 
     .news-content {
       order: 2;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .news-overlay {
+      top: auto;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.7));
+      display: flex;
+      align-items: flex-end;
+      padding: 10px;
+    }
+
+    .news-category {
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--text-primary);
+    }
+
+    .contact-container {
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+    }
+
+    .form-row {
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .submit-btn {
+      width: auto;
+      align-self: flex-start;
+    }
+
+    .footer-content {
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 40px;
     }
   }
 
+  /* Desktop Responsive Design */
+  @media (min-width: 1024px) {
+    .hero-title {
+      font-size: 2.2rem;
+    }
+
+    .hero-excerpt {
+      font-size: 1.1rem;
+    }
+
+    .hero-text-content {
+      padding: 40px;
+    }
+
+    .contact-section {
+      padding: 50px 40px;
+    }
+
+    .tips-button {
+      width: auto;
+      text-align: left;
+    }
+  }
+
+  /* Mobile specific optimizations */
   @media (max-width: 480px) {
-    .news-card-content {
-      display: block;
+    .site-wrapper {
+      padding-top: 70px;
+    }
+
+    .main-content {
+      padding: 0 10px;
+    }
+
+    .hero-section {
+      margin: 15px 0 25px;
+    }
+
+    .hero-content-wrapper {
+      grid-template-columns: 1fr;
+      min-height: auto;
+    }
+
+    .hero-image-container {
+      order: 1;
+      height: 180px;
+    }
+
+    .hero-text-content {
+      order: 2;
+      padding: 20px;
+    }
+
+    .hero-title {
+      font-size: 1.4rem;
+      margin-bottom: 12px;
+    }
+
+    .hero-excerpt {
+      font-size: 0.9rem;
+      margin-bottom: 15px;
+    }
+
+    .hero-meta {
+      gap: 15px;
+    }
+
+    .hero-cta {
+      padding: 8px 16px;
+      font-size: 11px;
+    }
+
+    .section-title {
+      font-size: 1.1rem;
     }
 
     .news-image-container {
-      height: 140px;
+      height: 160px;
+    }
+
+    .news-content {
+      padding: 15px;
+    }
+
+    .sidebar-section {
+      padding: 20px 15px;
+    }
+
+    .contact-section {
+      padding: 25px 15px;
+      margin: 25px 0;
+    }
+
+    .contact-method {
+      font-size: 0.85rem;
+      word-break: break-word;
+    }
+
+    .copyright {
+      font-size: 0.8rem;
+      line-height: 1.4;
+    }
+  }
+
+  /* Extra small screens */
+  @media (max-width: 320px) {
+    .hero-title {
+      font-size: 1.2rem;
+    }
+    
+    .hero-text-content {
+      padding: 15px;
+    }
+    
+    .news-content {
+      padding: 12px;
+    }
+    
+    .sidebar-section {
+      padding: 15px 12px;
+    }
+    
+    .contact-section {
+      padding: 20px 12px;
     }
   }
 </style>
