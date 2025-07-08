@@ -180,24 +180,6 @@
         <h4>Political Gossips</h4>
         <p>Independent investigative journalism exposing political corruption and holding power accountable.</p>
       </div>
-      <div class="footer-section">
-        <h4>News</h4>
-        <ul class="footer-links">
-          <li><a href="/category/political">Political Corruption</a></li>
-          <li><a href="/category/general">Government Oversight</a></li>
-          <li><a href="/archives">News Archives</a></li>
-          <li><a href="/methodology">Our Methods</a></li>
-        </ul>
-      </div>
-      <div class="footer-section">
-        <h4>Transparency</h4>
-        <ul class="footer-links">
-          <li><a href="/about">About Our Team</a></li>
-          <li><a href="/ethics">Ethics Policy</a></li>
-          <li><a href="/funding">Funding Sources</a></li>
-          <li><a href="/corrections">Corrections</a></li>
-        </ul>
-      </div>
     </div>
     <div class="footer-bottom">
       <div class="copyright">
