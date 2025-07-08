@@ -564,3 +564,32 @@ app.put('/api/articles/:id', authenticate, upload.single('image'), async (req, r
     res.status(500).json({ error: error.message });
   }
 });
+
+// Add this DELETE endpoint after your existing article routes (around line 570)
+app.delete('/api/articles/:id', authenticate, async (req, res) => {
+  try {
+    // Check if user has admin permission for deletion
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Admin access required for deleting articles' });
+    }
+    
+    const articleId = parseInt(req.params.id);
+    
+    // Check if article exists
+    const existingArticle = await articleService.getArticleById(articleId);
+    if (!existingArticle) {
+      return res.status(404).json({ error: 'Article not found' });
+    }
+    
+    // Delete the article
+    await articleService.deleteArticle(articleId);
+    
+    res.json({
+      message: 'Article deleted successfully',
+      articleId: articleId
+    });
+  } catch (error) {
+    console.error('Error deleting article:', error);
+    res.status(500).json({ error: error.message });
+  }
+});

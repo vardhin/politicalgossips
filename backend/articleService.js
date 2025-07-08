@@ -161,6 +161,25 @@ const updateArticle = async (articleId, title, summary, article_text, date, imag
   }
 };
 
+// Delete an article
+const deleteArticle = async (articleId) => {
+  try {
+    console.log(`Deleting article ${articleId}`);
+    
+    const deletedArticle = await Article.findOneAndDelete({ articleId });
+    
+    if (!deletedArticle) {
+      throw new Error('Article not found');
+    }
+    
+    console.log(`Successfully deleted article ${articleId}`);
+    return deletedArticle;
+  } catch (error) {
+    console.error('Error deleting article:', error);
+    throw error;
+  }
+};
+
 // Fetch latest articles
 const getLatestArticles = async (limit = 10) => {
   try {
@@ -216,7 +235,8 @@ const getArticleById = async (articleId) => {
 module.exports = {
   Article,
   createArticle,
-  updateArticle,  // Add this export
+  updateArticle,
+  deleteArticle,
   getLatestArticles,
   getArticlesByCategory,
   getFeaturedArticles,
