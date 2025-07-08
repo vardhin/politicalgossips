@@ -21,6 +21,8 @@
   let latestNews = [];
   let loading = true;
   let error = null;
+  let usingFallback = false; // Track if we're using fallback data
+  let retryInterval = null; // Store interval reference for cleanup
 
   // Using environment variable for API URL
   const API_URL = PUBLIC_API_URL;
@@ -56,28 +58,38 @@
     return article;
   }
 
-  // Function to fetch featured articles
+  // Function to fetch featured articles with retry capability
   async function fetchFeaturedArticles() {
     try {
       const response = await fetch(`${API_URL}/articles/featured`);
       if (!response.ok) throw new Error('API unavailable');
       const data = await response.json();
-      return data.length > 0 ? data : fallbackFeaturedArticles;
+      if (data.length > 0) {
+        usingFallback = false;
+        return data;
+      }
+      throw new Error('No data received');
     } catch (err) {
       console.warn('Using fallback featured articles:', err.message);
+      usingFallback = true;
       return fallbackFeaturedArticles;
     }
   }
 
-  // Function to fetch latest articles
+  // Function to fetch latest articles with retry capability
   async function fetchLatestArticles() {
     try {
       const response = await fetch(`${API_URL}/articles/latest?limit=6`);
       if (!response.ok) throw new Error('API unavailable');
       const data = await response.json();
-      return data.length > 0 ? data : fallbackLatestNews;
+      if (data.length > 0) {
+        usingFallback = false;
+        return data;
+      }
+      throw new Error('No data received');
     } catch (err) {
       console.warn('Using fallback latest articles:', err.message);
+      usingFallback = true;
       return fallbackLatestNews;
     }
   }
@@ -161,15 +173,11 @@
     }
   ];
 
-  // Updated onMount with better error handling
-  onMount(async () => {
+  // Function to load articles (can be called multiple times)
+  async function loadArticles() {
     try {
       loading = true;
       
-      // Set initial body class
-      document.body.classList.toggle('dark', $theme === 'dark');
-      
-      // Always try to fetch, but use fallbacks on failure
       const [featured, latest] = await Promise.all([
         fetchFeaturedArticles(),
         fetchLatestArticles()
@@ -200,16 +208,62 @@
           day: 'numeric'
         }) : article.date
       }));
+
+      // If we successfully loaded real data and were using fallback, clear retry interval
+      if (!usingFallback && retryInterval) {
+        clearInterval(retryInterval);
+        retryInterval = null;
+        console.log('Successfully loaded real data, stopped retrying');
+      }
       
     } catch (err) {
       console.warn('Loading fallback content:', err);
-      // Even if everything fails, show fallback content
+      usingFallback = true;
       featuredArticles = fallbackFeaturedArticles;
       latestNews = fallbackLatestNews;
     } finally {
       loading = false;
-      error = null; // Never show error to user
+      error = null;
     }
+  }
+
+  // Function to start retry mechanism
+  function startRetryMechanism() {
+    if (retryInterval) return; // Don't create multiple intervals
+    
+    // Retry every 30 seconds if using fallback data
+    retryInterval = setInterval(async () => {
+      if (usingFallback) {
+        console.log('Retrying API calls...');
+        await loadArticles();
+      } else {
+        // If we're not using fallback anymore, stop retrying
+        clearInterval(retryInterval);
+        retryInterval = null;
+      }
+    }, 30000); // 30 seconds
+  }
+
+  // Updated onMount with retry mechanism
+  onMount(async () => {
+    // Set initial body class
+    document.body.classList.toggle('dark', $theme === 'dark');
+    
+    // Load articles initially
+    await loadArticles();
+    
+    // Start retry mechanism if we're using fallback data
+    if (usingFallback) {
+      startRetryMechanism();
+    }
+    
+    // Cleanup function
+    return () => {
+      if (retryInterval) {
+        clearInterval(retryInterval);
+        retryInterval = null;
+      }
+    };
   });
 </script>
 
@@ -280,6 +334,9 @@
                       />
                       <div class="news-overlay">
                         <span class="news-category">{article.category}</span>
+                        {#if usingFallback}
+                          <span class="fallback-indicator">DEMO</span>
+                        {/if}
                       </div>
                     </div>
                     <div class="news-content">
@@ -630,6 +687,10 @@
     position: absolute;
     top: 15px;
     left: 15px;
+    display: flex;
+    gap: 10px;
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .news-category {
@@ -929,5 +990,19 @@
 
   @keyframes spin {
     to { transform: rotate(360deg); }
+  }
+
+  /* Add visual indicator for fallback mode */
+  .fallback-indicator {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: var(--warning-color);
+    color: white;
+    padding: 4px 8px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 </style>
