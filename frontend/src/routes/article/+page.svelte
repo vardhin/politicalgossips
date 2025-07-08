@@ -8,14 +8,15 @@
   
   // Navigation links for the navbar
   const navLinks = [
-    { href: "/", label: "Home", active: false },
-    { href: "/category/general", label: "General", active: false },
-    { href: "/category/political", label: "Political", active: false },
-    { href: "/contact", label: "Contact", active: false },
+    { href: "/", label: "HOME", active: false },
+    { href: "/category/general", label: "GENERAL", active: false },
+    { href: "/category/political", label: "POLITICAL", active: false },
+    { href: "/contact", label: "CONTACT US", active: false },
   ];
   
   // States
   let article = null;
+  let relatedArticles = [];
   let loading = true;
   let error = null;
   
@@ -25,10 +26,29 @@
   
   // Using environment variable for API URL
   const API_URL = PUBLIC_API_URL;
+
+  // Add reactive statement to update body class
+  $: {
+    if (typeof document !== 'undefined') {
+      document.body.classList.toggle('dark', $theme === 'dark');
+    }
+  }
+
+  // Function to slugify titles for URLs
+  function slugify(text) {
+    if (!text) return '';
+    
+    return text
+      .normalize('NFD')
+      .replace(/[^\p{L}\p{N}]+/gu, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .toLowerCase();
+  }
   
   // Improved image URL function
   function getImageUrl(id) {
-    if (!id) return "https://placehold.co/800x400/eee/aaa?text=No+Image";
+    if (!id) return "https://placehold.co/800x400/2c2c2c/ffffff?text=INVESTIGATION";
     return `${API_URL}/image/${id}`;
   }
   
@@ -42,6 +62,17 @@
       month: 'long',
       day: 'numeric'
     });
+  }
+
+  // Function to truncate text to 2 lines
+  function truncateToTwoLines(text, maxLength = 100) {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    
+    const truncated = text.substring(0, maxLength);
+    const lastSpace = truncated.lastIndexOf(' ');
+    
+    return (lastSpace > 0 ? truncated.substring(0, lastSpace) : truncated) + '...';
   }
   
   // Enhanced fetch article data function
@@ -77,6 +108,43 @@
       loading = false;
     }
   }
+
+  // Function to fetch related articles
+  async function fetchRelatedArticles(category) {
+    try {
+      // First try to fetch by category
+      let response = await fetch(`${API_URL}/articles/category/${category.toLowerCase()}?limit=4`);
+      
+      if (!response.ok || response.status === 404) {
+        // If category-specific fetch fails, get featured articles
+        console.log('Category fetch failed, falling back to featured articles');
+        response = await fetch(`${API_URL}/articles/featured?limit=4`);
+      }
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch related articles');
+      }
+      
+      const data = await response.json();
+      
+      // Format articles to match expected structure
+      return data.map(article => ({
+        id: article.articleId,
+        title: article.title,
+        category: article.category,
+        summary: truncateToTwoLines(article.summary),
+        image: getImageUrl(article.articleId),
+        date: new Date(article.date).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })
+      }));
+    } catch (err) {
+      console.error('Error fetching related articles:', err);
+      return [];
+    }
+  }
   
   // Add a tracking variable
   let currentlyLoadedId = null;
@@ -85,11 +153,20 @@
   onMount(() => {
     console.log("URL Search params:", $page.url.searchParams.toString());
     
+    // Set initial body class
+    document.body.classList.toggle('dark', $theme === 'dark');
+    
     if (articleId) {
       console.log(`Article ID from URL: ${articleId}, slug: ${slug}`);
       currentlyLoadedId = articleId;
-      fetchArticle(articleId).then(data => {
+      fetchArticle(articleId).then(async data => {
         article = data;
+        if (data && data.category) {
+          // Fetch related articles based on category
+          relatedArticles = await fetchRelatedArticles(data.category);
+          // Filter out current article from related articles
+          relatedArticles = relatedArticles.filter(related => related.id !== data.articleId);
+        }
       });
     } else {
       error = 'Article ID is missing';
@@ -101,73 +178,86 @@
   $: if (articleId && !loading && articleId !== currentlyLoadedId) {
     console.log(`URL parameter changed, fetching article: ${articleId}`);
     currentlyLoadedId = articleId;
-    fetchArticle(articleId).then(data => {
+    fetchArticle(articleId).then(async data => {
       article = data;
+      if (data && data.category) {
+        relatedArticles = await fetchRelatedArticles(data.category);
+        relatedArticles = relatedArticles.filter(related => related.id !== data.articleId);
+      }
     });
   }
 </script>
 
 <svelte:head>
   <title>{article ? article.title + ' - Political Gossips' : 'Article - Political Gossips'}</title>
-  <meta name="description" content={article ? article.summary : 'Political news and analysis'} />
+  <meta name="description" content={article ? article.summary : 'Independent investigative journalism exposing political corruption'} />
 </svelte:head>
 
-<div class="container">
+<div class="site-wrapper" class:dark={$theme === 'dark'}>
   <!-- Integrated NavBar component -->
-  <NavBar brand="Political Gossips" links={navLinks} sticky={true} />
+  <NavBar brand="POLITICAL GOSSIPS" links={navLinks} sticky={true} />
   
-  <main>
-    <!-- Article Content Section -->
-    <section class="article-section glass-panel">
-      {#if error}
-        <div class="error-message glass-card">
-          <h2>Error</h2>
+  <main class="main-content">
+    {#if error}
+      <section class="error-section">
+        <div class="error-container">
+          <h2>INVESTIGATION NOT FOUND</h2>
           <p>{error}</p>
-          <a href="/" class="btn-back">Back to Homepage</a>
+          <a href="/" class="error-btn">RETURN TO HOMEPAGE</a>
         </div>
-      {:else if loading}
+      </section>
+    {:else if loading}
+      <section class="loading-section">
         <div class="loading-container">
           <div class="loading-spinner"></div>
-          <p>Loading article...</p>
+          <p>Loading investigation...</p>
         </div>
-      {:else if !article}
-        <div class="error-message glass-card">
-          <h2>Article Not Found</h2>
-          <p>The article you're looking for doesn't exist or has been removed.</p>
-          <a href="/" class="btn-back">Back to Homepage</a>
+      </section>
+    {:else if !article}
+      <section class="error-section">
+        <div class="error-container">
+          <h2>ARTICLE NOT FOUND</h2>
+          <p>The investigation you're looking for has been moved or removed.</p>
+          <a href="/" class="error-btn">RETURN TO HOMEPAGE</a>
         </div>
-      {:else}
-        <article class="article-content">
+      </section>
+    {:else}
+      <!-- Article Content Section -->
+      <article class="article-main">
+        <div class="article-header">
           <div class="article-meta">
-            <span class="category">{article.category}</span>
-            <span class="date">{formatDate(article.date)}</span>
+            <span class="article-category">{article.category.toUpperCase()}</span>
+            <time class="article-date">{formatDate(article.date)}</time>
           </div>
           
-          <h1>{article.title}</h1>
+          <h1 class="article-title">{article.title}</h1>
           
-          <div class="article-image-container">
-            <img 
-              src={getImageUrl(article.articleId)} 
-              alt={article.title}
-              crossorigin="anonymous"
-              on:error={(e) => e.target.src = "https://placehold.co/800x400/eee/aaa?text=No+Image"}
-            />
-          </div>
-          
-          <div class="article-summary">
+          <div class="article-lead">
             <p class="summary-text">{article.summary}</p>
           </div>
-          
+        </div>
+        
+        <div class="article-image-container">
+          <img 
+            src={getImageUrl(article.articleId)} 
+            alt={article.title}
+            class="article-image"
+            crossorigin="anonymous"
+            on:error={(e) => e.target.src = "https://placehold.co/800x400/2c2c2c/ffffff?text=INVESTIGATION"}
+          />
+        </div>
+        
+        <div class="article-content">
           <div class="article-body">
             {#each article.article_text.split('\n\n') as paragraph}
               <p>{paragraph}</p>
             {/each}
           </div>
           
-          <div class="article-actions">
-            <a href="/" class="btn-back">Back to Homepage</a>
-            <div class="share-buttons">
-              <button class="btn-share" on:click={() => {
+          <div class="article-footer">
+            <div class="article-actions">
+              <a href="/" class="action-btn primary">RETURN TO HOMEPAGE</a>
+              <button class="action-btn secondary" on:click={() => {
                 if (navigator.share) {
                   navigator.share({
                     title: article.title,
@@ -175,7 +265,6 @@
                     url: window.location.href
                   }).catch(err => console.error('Error sharing:', err));
                 } else {
-                  // Fallback for browsers without share API
                   const tempInput = document.createElement('input');
                   document.body.appendChild(tempInput);
                   tempInput.value = window.location.href;
@@ -185,302 +274,656 @@
                   alert('Link copied to clipboard!');
                 }
               }}>
-                Share
+                SHARE INVESTIGATION
               </button>
             </div>
           </div>
-        </article>
-      {/if}
-    </section>
+        </div>
+      </article>
 
-    <!-- Related Articles Section (Optional) -->
-    <!-- This could be implemented in a future enhancement -->
+      <!-- Related Articles Section -->
+      {#if relatedArticles.length > 0}
+        <section class="related-section">
+          <div class="section-header">
+            <h2 class="section-title">RELATED {article.category.toUpperCase()} INVESTIGATIONS</h2>
+            <div class="section-divider"></div>
+          </div>
+          
+          <div class="related-grid">
+            {#each relatedArticles as relatedArticle}
+              <article class="related-card">
+                <div class="related-image-container">
+                  <img 
+                    src={relatedArticle.image} 
+                    alt={relatedArticle.title}
+                    class="related-image"
+                    on:error={(e) => e.target.src = "https://placehold.co/400x250/2c2c2c/ffffff?text=REPORT"}
+                  />
+                  <div class="related-overlay">
+                    <span class="related-category">{relatedArticle.category.toUpperCase()}</span>
+                  </div>
+                </div>
+                
+                <div class="related-content">
+                  <h3 class="related-title">
+                    <a href={`/article?id=${relatedArticle.id}&slug=${slugify(relatedArticle.title)}`}>
+                      {relatedArticle.title}
+                    </a>
+                  </h3>
+                  <p class="related-summary">{relatedArticle.summary}</p>
+                  <div class="related-meta">
+                    <time class="related-date">{relatedArticle.date}</time>
+                    <span class="read-time">5 min read</span>
+                  </div>
+                </div>
+              </article>
+            {/each}
+          </div>
+        </section>
+      {/if}
+    {/if}
   </main>
 
-  <footer class="glass-panel">
-    <div class="copyright">
-      &copy; {new Date().getFullYear()} Political Gossips. All rights reserved.
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>Political Gossips</h4>
+        <p>Independent investigative journalism exposing political corruption and holding power accountable.</p>
+      </div>
+      <div class="footer-section">
+        <h4>Investigations</h4>
+        <ul class="footer-links">
+          <li><a href="/category/political">Political Corruption</a></li>
+          <li><a href="/category/general">Government Oversight</a></li>
+          <li><a href="/archives">Investigation Archives</a></li>
+          <li><a href="/methodology">Our Methods</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h4>Transparency</h4>
+        <ul class="footer-links">
+          <li><a href="/about">About Our Team</a></li>
+          <li><a href="/ethics">Ethics Policy</a></li>
+          <li><a href="/funding">Funding Sources</a></li>
+          <li><a href="/corrections">Corrections</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="copyright">
+        &copy; {new Date().getFullYear()} Political Gossips. Independent journalism in the public interest.
+      </div>
     </div>
   </footer>
 </div>
 
 <style>
-  /* Base styles - improved responsiveness */
-  .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: clamp(60px, 10vw, 80px) clamp(15px, 3vw, 20px) clamp(30px, 5vw, 40px);
+  /* Import matching styles from main page */
+  :global(body) {
+    margin: 0;
+    padding: 0;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.5;
+    font-size: 16px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    background-color: #fafafa;
+    color: #1a1a1a;
+    font-weight: 400;
   }
-  
-  /* Enhanced glassmorphic styles */
-  .glass-panel {
-    background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-radius: 16px;
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--card-shadow);
-    padding: clamp(1.25rem, 5vw, 2.5rem);
-    margin-bottom: clamp(2rem, 5vw, 3rem);
+
+  :global(body.dark) {
+    background-color: #0f0f0f;
+    color: #e5e5e5;
+  }
+
+  /* CSS Custom Properties - Matching main page */
+  .site-wrapper {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f8f8;
+    --bg-tertiary: #e8e8e8;
+    --text-primary: #1a1a1a;
+    --text-secondary: #4a4a4a;
+    --text-tertiary: #666666;
+    --text-muted: #888888;
+    --border-color: #d0d0d0;
+    --border-light: #e8e8e8;
+    --shadow-light: rgba(0, 0, 0, 0.05);
+    --shadow-medium: rgba(0, 0, 0, 0.1);
+    --shadow-heavy: rgba(0, 0, 0, 0.2);
+    --accent-color: #d73027;
+    --accent-hover: #b71c1c;
+    --warning-color: #f57c00;
+    --success-bg: #e8f5e8;
+    --success-text: #2e7d32;
+    --success-border: #4caf50;
+    --error-bg: #ffebee;
+    --error-text: #c62828;
+    --error-border: #e57373;
+    
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding-top: 80px;
     transition: all 0.3s ease;
   }
-  
-  .glass-card {
-    background: var(--glass-card-bg);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border-radius: 12px;
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--card-shadow);
-    overflow: hidden;
-    padding: clamp(1.5rem, 5vw, 2.5rem);
-    text-align: center;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  .site-wrapper.dark {
+    --bg-primary: #0f0f0f;
+    --bg-secondary: #1a1a1a;
+    --bg-tertiary: #2a2a2a;
+    --text-primary: #e5e5e5;
+    --text-secondary: #b8b8b8;
+    --text-tertiary: #888888;
+    --text-muted: #666666;
+    --border-color: #333333;
+    --border-light: #2a2a2a;
+    --shadow-light: rgba(0, 0, 0, 0.3);
+    --shadow-medium: rgba(0, 0, 0, 0.5);
+    --shadow-heavy: rgba(0, 0, 0, 0.7);
+    --accent-color: #ef5350;
+    --accent-hover: #d32f2f;
+    --warning-color: #ff9800;
   }
-  
-  .glass-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--card-hover-shadow);
-  }
-  
-  /* Improved article styles */
-  .article-section {
-    margin-top: clamp(1.5rem, 4vw, 2.5rem);
-  }
-  
-  .article-content {
-    max-width: 800px;
+
+  /* Main Content */
+  .main-content {
+    flex: 1;
+    max-width: 1000px;
     margin: 0 auto;
+    width: 100%;
+    padding: 20px;
   }
-  
+
+  /* Article Main */
+  .article-main {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 10px var(--shadow-light);
+    margin-bottom: 50px;
+  }
+
+  .article-header {
+    padding: 40px 50px 30px;
+    border-bottom: 1px solid var(--border-light);
+  }
+
   .article-meta {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    font-size: 0.95rem;
-    margin-bottom: clamp(1.2rem, 4vw, 2rem);
+    gap: 20px;
+    margin-bottom: 20px;
     flex-wrap: wrap;
-    gap: 0.8rem;
   }
-  
-  .category {
-    color: var(--text-primary);
-    font-weight: 600;
-    padding: 0.4rem 1rem;
-    background: var(--category-bg);
-    border-radius: 50px;
-    transition: background 0.3s ease;
+
+  .article-category {
+    background: var(--accent-color);
+    color: white;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
   }
-  
-  .date {
-    color: var(--text-secondary);
+
+  .article-date {
+    color: var(--text-tertiary);
+    font-size: 14px;
     font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
-  
-  h1 {
-    font-size: clamp(1.8rem, 5vw, 2.8rem);
-    font-weight: 800;
+
+  .article-title {
+    font-size: 2.5rem;
+    font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: clamp(1.2rem, 4vw, 2rem);
+    margin: 0 0 25px;
     line-height: 1.2;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.5px;
   }
-  
-  .article-image-container {
-    margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: var(--card-shadow);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  .article-lead {
+    background: var(--bg-secondary);
+    padding: 25px;
+    border-left: 4px solid var(--accent-color);
+    margin: 0 -25px;
   }
-  
-  .article-image-container:hover {
-    transform: scale(1.01);
-    box-shadow: var(--card-hover-shadow);
-  }
-  
-  .article-image-container img {
-    width: 100%;
-    height: auto;
-    max-height: 550px;
-    object-fit: cover;
-    display: block;
-    transition: transform 0.7s ease;
-  }
-  
-  .article-image-container:hover img {
-    transform: scale(1.03);
-  }
-  
-  .article-summary {
-    margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
-    padding: clamp(1.2rem, 3vw, 1.8rem);
-    background: var(--article-summary-bg);
-    border-left: 5px solid var(--article-summary-border);
-    border-radius: 0 12px 12px 0;
-    transition: background 0.3s ease;
-  }
-  
+
   .summary-text {
-    font-size: clamp(1.1rem, 3vw, 1.3rem);
+    font-size: 1.2rem;
     font-weight: 500;
     font-style: italic;
     color: var(--text-primary);
-    line-height: 1.7;
+    line-height: 1.6;
+    margin: 0;
   }
-  
+
+  .article-image-container {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .article-image {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    object-position: center;
+    filter: grayscale(20%);
+    display: block;
+  }
+
+  .article-content {
+    padding: 50px;
+  }
+
   .article-body {
-    line-height: 1.9;
     color: var(--text-secondary);
-    margin-bottom: clamp(2rem, 5vw, 3rem);
+    line-height: 1.8;
+    margin-bottom: 40px;
   }
-  
+
   .article-body p {
-    margin-bottom: clamp(1.2rem, 3vw, 1.8rem);
-    font-size: clamp(1rem, 2.5vw, 1.15rem);
+    margin-bottom: 20px;
+    font-size: 1.1rem;
   }
-  
+
+  .article-footer {
+    border-top: 2px solid var(--border-color);
+    padding-top: 30px;
+  }
+
   .article-actions {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: clamp(1.5rem, 4vw, 2rem);
-    border-top: 1px solid var(--glass-border);
-    gap: 1rem;
+    gap: 20px;
+    flex-wrap: wrap;
   }
-  
-  .btn-back, .btn-share {
+
+  .action-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 120px;
-    padding: clamp(0.7rem, 2vw, 0.9rem) clamp(1.2rem, 3vw, 1.6rem);
-    border-radius: 8px;
-    font-weight: 600;
+    padding: 15px 25px;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
     text-align: center;
-    box-shadow: var(--card-shadow);
-  }
-  
-  .btn-back {
-    background-color: var(--btn-primary-bg);
-    color: var(--btn-primary-text);
     text-decoration: none;
-  }
-  
-  .btn-back:hover, .btn-back:focus {
-    background-color: var(--text-primary);
-    transform: translateY(-2px);
-    box-shadow: var(--card-hover-shadow);
-  }
-  
-  .btn-share {
-    background-color: var(--accent-color);
-    color: white;
     border: none;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: inherit;
   }
-  
-  .btn-share:hover, .btn-share:focus {
-    background-color: #3d8b40;
+
+  .action-btn.primary {
+    background: var(--text-primary);
+    color: var(--bg-primary);
+  }
+
+  .action-btn.primary:hover {
+    background: var(--accent-color);
+  }
+
+  .action-btn.secondary {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+  }
+
+  .action-btn.secondary:hover {
+    background: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+  }
+
+  /* Section Headers - Matching main page */
+  .section-header {
+    margin-bottom: 30px;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 15px;
+  }
+
+  .section-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .section-divider {
+    width: 80px;
+    height: 3px;
+    background: var(--accent-color);
+    border: none;
+    margin-top: 10px;
+  }
+
+  /* Related Articles Section */
+  .related-section {
+    margin-bottom: 50px;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+  }
+
+  .related-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px var(--shadow-light);
+  }
+
+  .related-card:hover {
+    box-shadow: 0 4px 15px var(--shadow-medium);
     transform: translateY(-2px);
-    box-shadow: var(--card-hover-shadow);
   }
-  
-  /* Focus states for accessibility */
-  .btn-back:focus, .btn-share:focus {
-    outline: 3px solid rgba(76, 175, 80, 0.5);
-    outline-offset: 2px;
+
+  .related-image-container {
+    position: relative;
+    overflow: hidden;
+    height: 180px;
   }
-  
-  /* Rest of your styles updated with CSS variables */
+
+  .related-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    filter: grayscale(30%);
+    transition: filter 0.3s ease;
+  }
+
+  .related-card:hover .related-image {
+    filter: grayscale(0%);
+  }
+
+  .related-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.7));
+    display: flex;
+    align-items: flex-end;
+    padding: 15px;
+  }
+
+  .related-category {
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--text-primary);
+    padding: 4px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .related-content {
+    padding: 25px;
+  }
+
+  .related-title {
+    margin: 0 0 15px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .related-title a {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .related-title a:hover {
+    color: var(--accent-color);
+  }
+
+  .related-summary {
+    color: var(--text-secondary);
+    margin: 0 0 15px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+
+  .related-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--border-light);
+    padding-top: 10px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .related-date {
+    color: var(--text-tertiary);
+    font-weight: 500;
+  }
+
+  .read-time {
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  /* Error and Loading States */
+  .error-section,
+  .loading-section {
+    padding: 80px 20px;
+    text-align: center;
+  }
+
+  .error-container {
+    background: var(--error-bg);
+    border: 1px solid var(--error-border);
+    border-left: 4px solid var(--error-border);
+    padding: 50px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .error-container h2 {
+    color: var(--error-text);
+    margin: 0 0 20px;
+    font-size: 1.5rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .error-container p {
+    color: var(--error-text);
+    margin: 0 0 30px;
+    font-size: 1.1rem;
+  }
+
+  .error-btn {
+    background: var(--error-text);
+    color: white;
+    padding: 15px 25px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    display: inline-block;
+  }
+
+  .error-btn:hover {
+    background: var(--accent-color);
+  }
+
   .loading-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: clamp(3rem, 8vw, 4rem) clamp(1rem, 4vw, 2rem);
+    padding: 80px 20px;
     text-align: center;
   }
-  
+
   .loading-spinner {
-    width: clamp(40px, 10vw, 60px);
-    height: clamp(40px, 10vw, 60px);
-    border: 5px solid var(--glass-border);
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border-color);
     border-radius: 50%;
-    border-top: 5px solid var(--text-primary);
-    animation: spin 1s linear infinite;
-    margin-bottom: clamp(1.2rem, 4vw, 2rem);
+    border-top-color: var(--accent-color);
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 20px;
   }
-  
+
   @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    to { transform: rotate(360deg); }
   }
-  
-  /* Enhanced error message styles */
-  .error-message {
-    padding: clamp(1.5rem, 5vw, 2.5rem);
-    text-align: center;
-    color: var(--error-text);
-    border-radius: 12px;
-    background: var(--error-bg);
-    border: 1px solid rgba(220, 53, 69, 0.3);
+
+  /* Footer - Matching main page */
+  .site-footer {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    padding: 50px 0 25px;
+    margin-top: auto;
+    border-top: 3px solid var(--accent-color);
   }
-  
-  .error-message h2 {
-    color: var(--error-text);
-    margin-bottom: 1.2rem;
-    font-size: clamp(1.4rem, 4vw, 1.7rem);
+
+  .footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 40px;
   }
-  
-  /* Improved footer */
-  footer {
-    text-align: center;
-    padding: clamp(1.5rem, 3vw, 2rem);
+
+  .footer-section h4 {
+    font-size: 1rem;
+    font-weight: 800;
+    margin: 0 0 20px;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
   }
-  
-  .copyright {
-    font-size: 0.95rem;
+
+  .footer-section p {
     color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.6;
+    font-size: 0.9rem;
+  }
+
+  .footer-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .footer-links li {
+    margin-bottom: 10px;
+  }
+
+  .footer-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.3s ease;
+    font-size: 0.9rem;
     font-weight: 500;
   }
-  
-  /* Enhanced responsive adjustments */
+
+  .footer-links a:hover {
+    color: var(--accent-color);
+  }
+
+  .footer-bottom {
+    border-top: 1px solid var(--border-color);
+    margin-top: 40px;
+    padding-top: 25px;
+    text-align: center;
+  }
+
+  .copyright {
+    color: var(--text-tertiary);
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  /* Responsive Design */
   @media (max-width: 768px) {
+    .article-header {
+      padding: 30px 25px 20px;
+    }
+
+    .article-content {
+      padding: 30px 25px;
+    }
+
+    .article-title {
+      font-size: 2rem;
+    }
+
     .article-meta {
       flex-direction: column;
       align-items: flex-start;
-      gap: 0.7rem;
+      gap: 10px;
     }
-    
+
     .article-actions {
       flex-direction: column;
-      gap: 1rem;
     }
-    
-    .btn-back, .btn-share {
+
+    .action-btn {
       width: 100%;
     }
+
+    .related-grid {
+      grid-template-columns: 1fr;
+    }
   }
-  
+
   @media (max-width: 480px) {
-    .glass-panel {
-      border-radius: 12px;
+    .article-header {
+      padding: 20px 15px;
     }
-    
-    .btn-back, .btn-share {
-      min-width: auto;
+
+    .article-content {
+      padding: 20px 15px;
+    }
+
+    .article-title {
+      font-size: 1.6rem;
+    }
+
+    .summary-text {
+      font-size: 1.1rem;
+    }
+
+    .article-body p {
+      font-size: 1rem;
     }
   }
-  
-  /* Smooth scrolling and selection styling */
+
+  /* Focus states for accessibility */
+  .action-btn:focus,
+  .error-btn:focus {
+    outline: 3px solid rgba(215, 48, 39, 0.5);
+    outline-offset: 2px;
+  }
+
+  /* Smooth scrolling */
   html {
     scroll-behavior: smooth;
   }
-  
+
+  /* Selection styling */
   ::selection {
-    background: var(--category-bg);
-    color: var(--text-primary);
+    background: var(--accent-color);
+    color: white;
   }
 </style>

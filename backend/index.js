@@ -357,13 +357,24 @@ app.get('/api/articles/latest', async (req, res) => {
   }
 });
 
+// Update the category endpoint (around line 420) to be case-insensitive
 app.get('/api/articles/category/:category', async (req, res) => {
   try {
     const { category } = req.params;
     const limit = parseInt(req.query.limit) || 10;
-    const articles = await articleService.getArticlesByCategory(category, limit);
+    
+    // Make the category search case-insensitive
+    const normalizedCategory = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+    
+    console.log(`Fetching articles for category: ${normalizedCategory} (original: ${category})`);
+    
+    const articles = await articleService.getArticlesByCategory(normalizedCategory, limit);
+    
+    console.log(`Found ${articles.length} articles for category: ${normalizedCategory}`);
+    
     res.json(articles);
   } catch (error) {
+    console.error(`Error fetching articles for category ${category}:`, error);
     res.status(500).json({ error: error.message });
   }
 });

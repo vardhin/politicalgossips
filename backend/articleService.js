@@ -195,12 +195,20 @@ const getLatestArticles = async (limit = 10) => {
   }
 };
 
-// Fetch articles by category
+// Update the getArticlesByCategory function to be case-insensitive
 const getArticlesByCategory = async (category, limit = 10) => {
   try {
-    return await Article.find({ category })
+    console.log(`Searching for articles with category: ${category}`);
+    
+    // Make the search case-insensitive using regex
+    const articles = await Article.find({ 
+      category: { $regex: new RegExp(`^${category}$`, 'i') }
+    })
       .sort({ date: -1 })
       .limit(limit);
+    
+    console.log(`Found ${articles.length} articles for category: ${category}`);
+    return articles;
   } catch (error) {
     console.error(`Error fetching ${category} articles:`, error);
     throw error;

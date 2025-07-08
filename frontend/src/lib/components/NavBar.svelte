@@ -20,7 +20,7 @@
   }
 </script>
 
-<nav class:sticky class="navbar">
+<nav class:sticky class="navbar" class:dark={$theme === 'dark'}>
   <div class="navbar-container">
     <div class="brand">
       <a href="/" class="brand-link">{brand}</a>
@@ -57,14 +57,35 @@
 
 <style>
   .navbar {
-    background: var(--navbar-bg, rgba(255, 255, 255, 0.1));
+    --navbar-bg: rgba(255, 255, 255, 0.95);
+    --navbar-border: rgba(0, 0, 0, 0.1);
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --text-primary: #1a1a1a;
+    --text-secondary: #555555;
+    --text-primary-hover: #000000;
+    --btn-hover-bg: rgba(0, 0, 0, 0.05);
+    --menu-bg: rgba(255, 255, 255, 0.95);
+    
+    background: var(--navbar-bg);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--navbar-border, rgba(255, 255, 255, 0.2));
-    box-shadow: 0 4px 15px var(--shadow-color, rgba(0, 0, 0, 0.05));
+    border-bottom: 1px solid var(--navbar-border);
+    box-shadow: 0 4px 15px var(--shadow-color);
     padding: 0.8rem 0;
     width: 100%;
     z-index: 1000;
+    transition: all 0.3s ease;
+  }
+  
+  .navbar.dark {
+    --navbar-bg: rgba(26, 26, 26, 0.95);
+    --navbar-border: rgba(255, 255, 255, 0.1);
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --text-primary-hover: #ffffff;
+    --btn-hover-bg: rgba(255, 255, 255, 0.1);
+    --menu-bg: rgba(26, 26, 26, 0.95);
   }
   
   .sticky {
@@ -86,16 +107,18 @@
     font-size: 1.5rem;
     font-weight: 600;
     flex-shrink: 0;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+
   }
   
   .brand-link {
-    color: var(--text-primary, rgba(0, 0, 0, 0.8));
+    color: var(--text-primary);
     text-decoration: none;
     transition: color 0.3s;
   }
   
   .brand-link:hover {
-    color: var(--text-primary-hover, rgba(0, 0, 0, 1));
+    color: var(--text-primary-hover);
   }
   
   .right-section {
@@ -111,14 +134,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.3rem;
+    padding: 0.5rem;
     border-radius: 50%;
-    transition: background-color 0.3s;
-    color: var(--text-primary, rgba(0, 0, 0, 0.8));
+    transition: all 0.3s ease;
+    color: var(--text-primary);
   }
 
   .theme-toggle:hover {
-    background-color: var(--btn-hover-bg, rgba(0, 0, 0, 0.1));
+    background-color: var(--btn-hover-bg);
+    transform: scale(1.1);
   }
   
   .links {
@@ -130,28 +154,30 @@
   }
   
   .nav-link {
-    color: var(--text-secondary, rgba(0, 0, 0, 0.7));
+    color: var(--text-secondary);
     text-decoration: none;
     font-weight: 500;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+
     position: relative;
-    padding: 0.2rem 0;
-    transition: color 0.3s;
+    padding: 0.5rem 0;
+    transition: all 0.3s ease;
   }
   
   .nav-link:hover,
   .nav-link.active {
-    color: var(--text-primary, rgba(0, 0, 0, 1));
+    color: var(--text-primary);
   }
   
   .nav-link::after {
     content: "";
     position: absolute;
-    bottom: -2px;
+    bottom: 0;
     left: 0;
     width: 0;
     height: 2px;
-    background-color: currentColor;
-    transition: width 0.3s;
+    background-color: #c41e3a;
+    transition: width 0.3s ease;
   }
   
   .nav-link:hover::after,
@@ -172,8 +198,8 @@
     display: block;
     width: 24px;
     height: 2px;
-    background: var(--text-primary, rgba(0, 0, 0, 0.8));
-    transition: all 0.3s;
+    background: var(--text-primary);
+    transition: all 0.3s ease;
   }
   
   .hamburger::before,
@@ -183,8 +209,8 @@
     left: 0;
     width: 24px;
     height: 2px;
-    background: var(--text-primary, rgba(0, 0, 0, 0.8));
-    transition: all 0.3s;
+    background: var(--text-primary);
+    transition: all 0.3s ease;
   }
   
   .hamburger::before {
@@ -220,10 +246,10 @@
       top: 0;
       right: 0;
       flex-direction: column;
-      background: var(--menu-bg, rgba(255, 255, 255, 0.95));
+      background: var(--menu-bg);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      box-shadow: -5px 0 15px var(--shadow-color, rgba(0, 0, 0, 0.05));
+      box-shadow: -5px 0 15px var(--shadow-color);
       height: 100vh;
       width: 250px;
       padding: 5rem 2rem 2rem;
