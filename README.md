@@ -80,7 +80,7 @@ politicalgossips/
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/politicalgossips.git
+git clone https://github.com/vardhin/politicalgossips.git
 cd politicalgossips/backend
 ```
 
@@ -200,7 +200,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👥 Authors
 
-- **Your Name** - Initial work - [YourGitHub](https://github.com/yourusername)
+- **Your Name** - Initial work - [@vardhin](https://github.com/vardhin)
 
 ## 🙏 Acknowledgments
 
@@ -213,8 +213,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 If you have any questions or need help, please:
 - Open an issue on GitHub
-- Contact us at [your-email@example.com]
-- Check our [documentation](./docs)
 
 ---
 
