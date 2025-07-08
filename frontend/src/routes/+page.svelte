@@ -65,14 +65,12 @@
       if (!response.ok) throw new Error('API unavailable');
       const data = await response.json();
       if (data.length > 0) {
-        usingFallback = false;
-        return data;
+        return { data, isReal: true };
       }
       throw new Error('No data received');
     } catch (err) {
       console.warn('Using fallback featured articles:', err.message);
-      usingFallback = true;
-      return fallbackFeaturedArticles;
+      return { data: fallbackFeaturedArticles, isReal: false };
     }
   }
 
@@ -83,14 +81,12 @@
       if (!response.ok) throw new Error('API unavailable');
       const data = await response.json();
       if (data.length > 0) {
-        usingFallback = false;
-        return data;
+        return { data, isReal: true };
       }
       throw new Error('No data received');
     } catch (err) {
       console.warn('Using fallback latest articles:', err.message);
-      usingFallback = true;
-      return fallbackLatestNews;
+      return { data: fallbackLatestNews, isReal: false };
     }
   }
 
@@ -178,17 +174,21 @@
     try {
       loading = true;
       
-      const [featured, latest] = await Promise.all([
+      const [featuredResult, latestResult] = await Promise.all([
         fetchFeaturedArticles(),
         fetchLatestArticles()
       ]);
       
-      // Format articles to match the expected structure
-      featuredArticles = featured.map(article => ({
+      // Check if both calls returned real data
+      const bothReal = featuredResult.isReal && latestResult.isReal;
+      usingFallback = !bothReal;
+      
+      // Format featured articles
+      featuredArticles = featuredResult.data.map(article => ({
         id: article.articleId || article.id,
         title: article.title,
         excerpt: article.summary || article.excerpt,
-        image: getImageUrl(article),
+        image: featuredResult.isReal ? getImageUrl(article) : article.image,
         category: article.category,
         date: article.date ? new Date(article.date).toLocaleDateString('en-US', {
           year: 'numeric',
@@ -197,7 +197,8 @@
         }) : article.date
       }));
       
-      latestNews = latest.map(article => ({
+      // Format latest articles
+      latestNews = latestResult.data.map(article => ({
         id: article.articleId || article.id,
         title: article.title,
         category: article.category,
@@ -217,7 +218,7 @@
       }
       
     } catch (err) {
-      console.warn('Loading fallback content:', err);
+      console.warn('Error in loadArticles:', err);
       usingFallback = true;
       featuredArticles = fallbackFeaturedArticles;
       latestNews = fallbackLatestNews;
@@ -227,21 +228,25 @@
     }
   }
 
-  // Function to start retry mechanism
+  // Function to start retry mechanism with 1 second intervals
   function startRetryMechanism() {
     if (retryInterval) return; // Don't create multiple intervals
     
-    // Retry every 30 seconds if using fallback data
+    // Retry every 1 second if using fallback data
     retryInterval = setInterval(async () => {
       if (usingFallback) {
         console.log('Retrying API calls...');
+        // Don't show loading spinner during retries
+        const wasLoading = loading;
         await loadArticles();
+        loading = wasLoading; // Restore loading state to not flash the spinner
       } else {
         // If we're not using fallback anymore, stop retrying
         clearInterval(retryInterval);
         retryInterval = null;
+        console.log('Stopped retrying - real data loaded');
       }
-    }, 30000); // 30 seconds
+    }, 1000); // 1 second intervals
   }
 
   // Updated onMount with retry mechanism
