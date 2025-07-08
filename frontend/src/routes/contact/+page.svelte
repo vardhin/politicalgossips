@@ -97,18 +97,6 @@
         <div class="info-card">
           <h2>Confidential Sources</h2>
           <p>Our investigative team is committed to protecting whistleblowers and sources. All communications are handled with the highest level of security and confidentiality.</p>
-          
-          <div class="contact-methods">
-            <div class="contact-method">
-              <div class="method-icon">📧</div>
-              <div class="method-details">
-                <strong>Encrypted Email</strong>
-                <span>news@politicalgossips.com</span>
-                <small>PGP encryption available upon request</small>
-              </div>
-            </div>
-            
-          </div>
         </div>
 
         <!-- Security Notice -->
@@ -127,7 +115,7 @@
       <section class="contact-form-section">
         <div class="form-card">
           <h2>Submit Information</h2>
-          <p>Use this secure form to share information, tips, or reach out to our team.</p>
+          <p>Use this secure form to share information, tips, or reach out to our team. PGP encryption is available upon request</p>
 
           {#if contactResult}
             <div class="message-result {contactResult.success ? 'success' : 'error'}">
