@@ -10,6 +10,7 @@
     { href: "/", label: "HOME", active: false },
     { href: "/category/general", label: "GENERAL", active: false },
     { href: "/category/political", label: "POLITICAL", active: false },
+    { href: "/category/crime", label: "CRIME", active: false },
     { href: "/contact", label: "CONTACT US", active: true },
   ];
 

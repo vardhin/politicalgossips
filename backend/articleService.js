@@ -36,7 +36,7 @@ const articleSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    enum: ['Political', 'General'],
+    enum: ['Political', 'General', 'Crime'],
     required: true
   },
   featured: {
