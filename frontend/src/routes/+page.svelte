@@ -806,6 +806,119 @@
     }
   }
 
+  /* Section Headers - Improved styling */
+  .section-header {
+    margin-bottom: 25px;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 12px;
+  }
+
+  .section-title,
+  .sidebar-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+
+  .section-divider {
+    width: 60px;
+    height: 3px;
+    background: var(--accent-color);
+    border: none;
+    margin-top: 8px;
+  }
+
+  /* Sidebar - Improved styling to match article page */
+  .sidebar-section {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 10px var(--shadow-light);
+    margin-bottom: 30px;
+    padding: 20px;
+    border-radius: 0;
+    overflow: hidden;
+  }
+
+  /* Sidebar News Items - Improved styling to match article page */
+  .sidebar-news-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .sidebar-news-item {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px var(--shadow-light);
+    margin-bottom: 0;
+    border-bottom: none;
+  }
+
+  .sidebar-news-item:hover {
+    box-shadow: 0 4px 15px var(--shadow-medium);
+    transform: translateY(-1px);
+  }
+
+  .sidebar-news-item:last-child {
+    border-bottom: none;
+    padding-bottom: 20px;
+  }
+
+  .sidebar-news-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .sidebar-category {
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 6px 12px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .sidebar-date {
+    color: var(--text-tertiary);
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .sidebar-news-title {
+    margin: 0 0 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .sidebar-news-title a {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .sidebar-news-title a:hover {
+    color: var(--accent-color);
+  }
+
+  .sidebar-news-summary {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin: 0;
+  }
+
   /* Tips Section */
   .tips-section {
     background: var(--bg-tertiary);
@@ -836,72 +949,6 @@
 
   .tips-button:hover {
     background: var(--accent-hover);
-  }
-
-  /* Sidebar News Items */
-  .sidebar-news-list {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  .sidebar-news-item {
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--border-light);
-  }
-
-  .sidebar-news-item:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-
-  .sidebar-news-meta {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
-    flex-wrap: wrap;
-  }
-
-  .sidebar-category {
-    background: var(--text-tertiary);
-    color: white;
-    padding: 4px 8px;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .sidebar-date {
-    color: var(--text-tertiary);
-    font-size: 11px;
-    font-weight: 500;
-    text-transform: uppercase;
-  }
-
-  .sidebar-news-title {
-    margin: 0 0 8px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    line-height: 1.3;
-  }
-
-  .sidebar-news-title a {
-    color: var(--text-primary);
-    text-decoration: none;
-    transition: color 0.3s ease;
-  }
-
-  .sidebar-news-title a:hover {
-    color: var(--accent-color);
-  }
-
-  .sidebar-news-summary {
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    line-height: 1.4;
-    margin: 0;
   }
 
   /* Footer - Mobile optimized */
@@ -1010,5 +1057,76 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+  }
+
+  /* Responsive improvements for sidebar on mobile */
+  @media (max-width: 767px) {
+    .sidebar-section {
+      padding: 15px;
+    }
+
+    .sidebar-news-item {
+      padding: 15px;
+    }
+
+    .sidebar-news-title {
+      font-size: 1rem;
+    }
+
+    .sidebar-news-summary {
+      font-size: 0.85rem;
+    }
+
+    .sidebar-title {
+      font-size: 1.1rem;
+    }
+  }
+
+  /* Tablet responsive improvements */
+  @media (min-width: 768px) {
+    .sidebar-news-item:hover {
+      transform: translateY(-2px);
+    }
+
+    .section-title,
+    .sidebar-title {
+      font-size: 1.4rem;
+      letter-spacing: 2px;
+    }
+
+    .section-divider {
+      width: 80px;
+    }
+  }
+
+  /* Desktop responsive improvements */
+  @media (min-width: 1024px) {
+    .sidebar-section {
+      padding: 25px;
+    }
+
+    .sidebar-news-item {
+      padding: 25px;
+    }
+  }
+
+  /* Touch target improvements for mobile */
+  @media (max-width: 768px) {
+    .sidebar-news-title a {
+      display: block;
+      padding: 5px 0;
+    }
+  }
+
+  /* Focus states for accessibility */
+  .sidebar-news-title a:focus {
+    outline: 3px solid rgba(215, 48, 39, 0.5);
+    outline-offset: 2px;
+  }
+
+  /* Selection styling */
+  ::selection {
+    background: var(--accent-color);
+    color: white;
   }
 </style>
