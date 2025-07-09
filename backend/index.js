@@ -24,8 +24,8 @@ if (process.env.NODE_ENV === 'production' && (!JWT_SECRET || !REFRESH_TOKEN_SECR
 }
 
 const JWT_EXPIRES_IN = '1h';
-const ACCESS_TOKEN_EXPIRES_IN = '1h';
-const REFRESH_TOKEN_EXPIRES_IN = '7d';
+const ACCESS_TOKEN_EXPIRES_IN = '30d'; // Changed from '1h' to 30 days
+const REFRESH_TOKEN_EXPIRES_IN = '90d'; // Changed from '7d' to 90 days
 
 // Initialize express app
 const app = express();

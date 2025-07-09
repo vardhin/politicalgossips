@@ -329,34 +329,34 @@
           {:else}
             <div class="featured-grid">
               {#each featuredArticles.slice(1) as article}
-                <article class="news-card">
-                  <div class="news-card-content">
-                    <div class="news-image-container">
-                      <img 
-                        src={article.image} 
-                        alt={article.title}
-                        class="news-image"
-                        on:error={(e) => e.target.src = "https://placehold.co/400x250/2c2c2c/ffffff?text=REPORT"}
-                      />
-                      <div class="news-overlay">
-                        <span class="news-category">{article.category}</span>
-                        {#if usingFallback}
-                          <span class="fallback-indicator">DEMO</span>
-                        {/if}
+                <a href={`/article?id=${article.id}&slug=${slugify(article.title)}`} class="news-card-link">
+                  <article class="news-card">
+                    <div class="news-card-content">
+                      <div class="news-image-container">
+                        <img 
+                          src={article.image} 
+                          alt={article.title}
+                          class="news-image"
+                          on:error={(e) => e.target.src = "https://placehold.co/400x250/2c2c2c/ffffff?text=REPORT"}
+                        />
+                        <div class="news-overlay">
+                          <span class="news-category">{article.category}</span>
+                          {#if usingFallback}
+                            <span class="fallback-indicator">DEMO</span>
+                          {/if}
+                        </div>
+                      </div>
+                      <div class="news-content">
+                        <h3 class="news-title">{article.title}</h3>
+                        <p class="news-excerpt">{article.excerpt}</p>
+                        <div class="news-meta">
+                          <time class="news-date">{article.date}</time>
+                          <span class="read-time">5 min read</span>
+                        </div>
                       </div>
                     </div>
-                    <div class="news-content">
-                      <h3 class="news-title">
-                        <a href={`/article?id=${article.id}&slug=${slugify(article.title)}`}>{article.title}</a>
-                      </h3>
-                      <p class="news-excerpt">{article.excerpt}</p>
-                      <div class="news-meta">
-                        <time class="news-date">{article.date}</time>
-                        <span class="read-time">5 min read</span>
-                      </div>
-                    </div>
-                  </div>
-                </article>
+                  </article>
+                </a>
               {/each}
             </div>
           {/if}
@@ -374,16 +374,16 @@
           
           <div class="sidebar-news-list">
             {#each latestNews as article}
-              <article class="sidebar-news-item">
-                <div class="sidebar-news-meta">
-                  <span class="sidebar-category">{article.category}</span>
-                  <time class="sidebar-date">{article.date}</time>
-                </div>
-                <h4 class="sidebar-news-title">
-                  <a href={`/article?id=${article.id}&slug=${slugify(article.title)}`}>{article.title}</a>
-                </h4>
-                <p class="sidebar-news-summary">{article.summary}</p>
-              </article>
+              <a href={`/article?id=${article.id}&slug=${slugify(article.title)}`} class="sidebar-news-link">
+                <article class="sidebar-news-item">
+                  <div class="sidebar-news-meta">
+                    <span class="sidebar-category">{article.category}</span>
+                    <time class="sidebar-date">{article.date}</time>
+                  </div>
+                  <h4 class="sidebar-news-title">{article.title}</h4>
+                  <p class="sidebar-news-summary">{article.summary}</p>
+                </article>
+              </a>
             {/each}
           </div>
         </section>
@@ -648,6 +648,19 @@
     gap: 20px;
   }
 
+  /* News Card Links - Make entire card clickable */
+  .news-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    width: 100%;
+  }
+
+  .news-card-link:focus {
+    outline: 3px solid rgba(215, 48, 39, 0.5);
+    outline-offset: 2px;
+  }
+
   /* News Cards - Full width list item layout */
   .news-card {
     background: var(--bg-primary);
@@ -656,10 +669,12 @@
     transition: all 0.3s ease;
     box-shadow: 0 2px 10px var(--shadow-light);
     width: 100%;
+    cursor: pointer;
   }
 
   .news-card:hover {
     box-shadow: 0 4px 15px var(--shadow-medium);
+    transform: translateY(-1px);
   }
 
   .news-card-content {
@@ -723,15 +738,11 @@
     font-weight: 700;
     line-height: 1.2;
     letter-spacing: -0.5px;
-  }
-
-  .news-title a {
     color: var(--text-primary);
-    text-decoration: none;
     transition: color 0.3s ease;
   }
 
-  .news-title a:hover {
+  .news-card-link:hover .news-title {
     color: var(--accent-color);
   }
 
@@ -857,6 +868,7 @@
     box-shadow: 0 1px 3px var(--shadow-light);
     margin-bottom: 0;
     border-bottom: none;
+    cursor: pointer;
   }
 
   .sidebar-news-item:hover {
@@ -864,59 +876,63 @@
     transform: translateY(-1px);
   }
 
-  .sidebar-news-item:last-child {
-    border-bottom: none;
-    padding-bottom: 20px;
-  }
-
-  .sidebar-news-meta {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
-    flex-wrap: wrap;
-  }
-
-  .sidebar-category {
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 6px 12px;
-    font-size: 10px;
+  /* Remove individual link styling from title since entire card is clickable */
+  .news-title {
+    margin: 0 0 15px;
+    font-size: 1.4rem;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+    color: var(--text-primary);
+    transition: color 0.3s ease;
   }
 
-  .sidebar-date {
-    color: var(--text-tertiary);
-    font-size: 11px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+  .news-card-link:hover .news-title {
+    color: var(--accent-color);
   }
 
+  /* Sidebar News Links - Make entire sidebar item clickable */
+  .sidebar-news-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    width: 100%;
+  }
+
+  .sidebar-news-link:focus {
+    outline: 3px solid rgba(215, 48, 39, 0.5);
+    outline-offset: 2px;
+  }
+
+  /* Sidebar News Items - Improved styling to match article page */
+  .sidebar-news-item {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px var(--shadow-light);
+    margin-bottom: 0;
+    border-bottom: none;
+    cursor: pointer;
+  }
+
+  .sidebar-news-item:hover {
+    box-shadow: 0 4px 15px var(--shadow-medium);
+    transform: translateY(-1px);
+  }
+
+  /* Remove individual link styling from sidebar title since entire item is clickable */
   .sidebar-news-title {
     margin: 0 0 12px;
     font-size: 1.1rem;
     font-weight: 600;
     line-height: 1.3;
-  }
-
-  .sidebar-news-title a {
     color: var(--text-primary);
-    text-decoration: none;
     transition: color 0.3s ease;
   }
 
-  .sidebar-news-title a:hover {
+  .sidebar-news-link:hover .sidebar-news-title {
     color: var(--accent-color);
-  }
-
-  .sidebar-news-summary {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    line-height: 1.4;
-    margin: 0;
   }
 
   /* Tips Section */
