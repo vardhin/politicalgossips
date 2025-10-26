@@ -25,6 +25,7 @@
   let similarArticles = [];
   let loading = false;
   let error = data.error;
+  let linkCopied = false;
   
   // Get article ID from URL query parameters
   $: articleId = $page.url.searchParams.get('id');
@@ -114,6 +115,26 @@
     return new Date(dateString).toLocaleDateString('en-US', options);
   }
   
+  // Function to format article text with proper line breaks
+  function formatArticleText(text) {
+    if (!text) return '';
+    // Add line breaks after periods followed by space
+    return text.replace(/\.\s+/g, '.<br><br>');
+  }
+  
+  // Function to copy link with feedback
+  async function copyShareLink() {
+    try {
+      await navigator.clipboard.writeText(getAbsoluteUrl());
+      linkCopied = true;
+      setTimeout(() => {
+        linkCopied = false;
+      }, 3000);
+    } catch (err) {
+      alert('Failed to copy link. Please try again.');
+    }
+  }
+  
   // Reactive statement to fetch article when ID changes
   $: if (articleId) {
     fetchArticle(articleId);
@@ -196,19 +217,23 @@
 
         <!-- Article Body -->
         <div class="article-body">
-          {@html article.article_text}
+          {@html formatArticleText(article.article_text)}
         </div>
 
         <!-- Social Share Buttons -->
         <div class="share-section">
           <h3>Share This Article</h3>
+          
+          {#if linkCopied}
+            <div class="copy-notification">
+              ✓ Link copied to clipboard!
+            </div>
+          {/if}
+          
           <div class="share-buttons">
             <button 
               class="share-btn share-link"
-              on:click={() => {
-                navigator.clipboard.writeText(getAbsoluteUrl());
-                alert('Link copied to clipboard!');
-              }}
+              on:click={copyShareLink}
             >
               <Share2 size={18} />
               <span>Share Link</span>
@@ -243,6 +268,42 @@
         </div>
       </article>
 
+      <!-- More Articles from Same Category -->
+      {#if relatedArticles.length > 0}
+        <section class="more-articles-section">
+          <div class="section-header">
+            <h2 class="section-title">MORE FROM {article.category?.toUpperCase()}</h2>
+            <div class="section-divider"></div>
+          </div>
+          <div class="more-articles-grid">
+            {#each relatedArticles as related}
+              <a href="/article?id={related.articleId}" class="more-article-card">
+                {#if related.articleId}
+                  <div class="more-article-image">
+                    <img 
+                      src={getArticleImageUrl(related.articleId)} 
+                      alt={related.title}
+                      loading="lazy"
+                    />
+                  </div>
+                {/if}
+                <div class="more-article-content">
+                  <span class="category {related.category?.toLowerCase()}">{related.category}</span>
+                  <h3>{related.title}</h3>
+                  <p>{related.summary}</p>
+                  <time datetime={related.date}>{formatDate(related.date)}</time>
+                </div>
+              </a>
+            {/each}
+          </div>
+          <div class="view-all-container">
+            <a href="/category/{article.category?.toLowerCase()}" class="view-all-btn">
+              VIEW ALL {article.category?.toUpperCase()} ARTICLES
+            </a>
+          </div>
+        </section>
+      {/if}
+
       <!-- Similar Articles Section -->
       {#if similarArticles.length > 0}
         <section class="similar-articles">
@@ -267,31 +328,6 @@
                   <h3>{similar.title}</h3>
                   <p>{similar.summary}</p>
                   <time datetime={similar.date}>{formatDate(similar.date)}</time>
-                </div>
-              </a>
-            {/each}
-          </div>
-        </section>
-      {/if}
-
-      <!-- Related Articles -->
-      {#if relatedArticles.length > 0}
-        <section class="related-articles">
-          <h2>Related Articles</h2>
-          <div class="related-grid">
-            {#each relatedArticles as related}
-              <a href="/article?id={related.articleId}" class="related-card">
-                {#if related.articleId}
-                  <img 
-                    src={getArticleImageUrl(related.articleId)} 
-                    alt={related.title}
-                    loading="lazy"
-                  />
-                {/if}
-                <div class="related-content">
-                  <span class="category {related.category?.toLowerCase()}">{related.category}</span>
-                  <h3>{related.title}</h3>
-                  <p>{related.summary}</p>
                 </div>
               </a>
             {/each}
@@ -325,6 +361,10 @@
     --border-color: #d0d0d0;
     --accent-color: #d73027;
     --accent-hover: #b71c1c;
+    --shadow-medium: rgba(0, 0, 0, 0.15);
+    --success-bg: #e8f5e9;
+    --success-text: #2e7d32;
+    --success-border: #4caf50;
     
     min-height: 100vh;
     padding-top: 80px;
@@ -339,6 +379,7 @@
     --border-color: #333333;
     --accent-color: #ef5350;
     --accent-hover: #d32f2f;
+    --shadow-medium: rgba(0, 0, 0, 0.5);
   }
 
   .article-page {
@@ -417,312 +458,258 @@
   }
 
   .article-body :global(p) {
-    margin-bottom: 20px;
+    margin-bottom: 1.5em;
   }
 
+  .article-body :global(br) {
+    display: block;
+    margin: 0.5em 0;
+    content: "";
+  }
+
+  /* Share Section */
   .share-section {
     padding: 30px 40px;
     border-top: 1px solid var(--border-color);
+    background: var(--bg-secondary);
   }
 
   .share-section h3 {
-    font-size: 1.2rem;
-    font-weight: 700;
-    margin: 0 0 20px;
-    color: var(--text-primary);
-  }
-
-  .share-buttons {
-    display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
-  }
-
-  .share-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 24px;
-    border: none;
-    font-weight: 700;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-radius: 4px;
-  }
-
-  .share-btn :global(svg) {
-    flex-shrink: 0;
-  }
-
-  .whatsapp-icon,
-  .twitter-x-icon {
-    flex-shrink: 0;
-  }
-
-  .share-btn.share-link {
-    background: #6c757d;
-    color: white;
-  }
-
-  .share-btn.share-link:hover {
-    background: #5a6268;
-  }
-
-  .share-btn.whatsapp {
-    background: #25D366;
-    color: white;
-  }
-
-  .share-btn.whatsapp:hover {
-    background: #20BA5A;
-  }
-
-  .share-btn.twitter {
-    background: #000000;
-    color: white;
-  }
-
-  .share-btn.twitter:hover {
-    background: #333333;
-  }
-
-  .page-wrapper.dark .share-btn.twitter {
-    background: #ffffff;
-    color: #000000;
-  }
-
-  .page-wrapper.dark .share-btn.twitter:hover {
-    background: #e0e0e0;
-  }
-
-  .share-btn.facebook {
-    background: #1877F2;
-    color: white;
-  }
-
-  .share-btn.facebook:hover {
-    background: #165DC6;
-  }
-
-  .page-wrapper {
-    --bg-primary: #ffffff;
-    --bg-secondary: #f8f8f8;
-    --text-primary: #1a1a1a;
-    --text-secondary: #4a4a4a;
-    --text-tertiary: #666666;
-    --border-color: #d0d0d0;
-    --accent-color: #d73027;
-    --accent-hover: #b71c1c;
-    
-    min-height: 100vh;
-    padding-top: 80px;
-  }
-
-  .page-wrapper.dark {
-    --bg-primary: #0f0f0f;
-    --bg-secondary: #1a1a1a;
-    --text-primary: #e5e5e5;
-    --text-secondary: #b8b8b8;
-    --text-tertiary: #888888;
-    --border-color: #333333;
-    --accent-color: #ef5350;
-    --accent-hover: #d32f2f;
-  }
-
-  .article-page {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 40px 20px;
-  }
-
-  .article-content {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    margin-bottom: 40px;
-  }
-
-  .article-header {
-    padding: 40px;
-    border-bottom: 1px solid var(--border-color);
-  }
-
-  .article-meta {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 20px;
-  }
-
-  .category {
-    background: var(--accent-color);
-    color: white;
-    padding: 6px 12px;
-    font-size: 11px;
+    font-size: 1rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1px;
-  }
-
-  time {
-    color: var(--text-tertiary);
-    font-size: 13px;
-    font-weight: 500;
-    text-transform: uppercase;
-  }
-
-  .article-title {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0 0 20px;
-    line-height: 1.2;
-  }
-
-  .article-summary {
-    font-size: 1.2rem;
-    color: var(--text-secondary);
-    font-style: italic;
-    margin: 0;
-    line-height: 1.6;
-  }
-
-  .article-image {
-    width: 100%;
-    overflow: hidden;
-  }
-
-  .article-image img {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
-
-  .article-body {
-    padding: 40px;
-    color: var(--text-secondary);
-    line-height: 1.8;
-    font-size: 1.1rem;
-  }
-
-  .article-body :global(p) {
-    margin-bottom: 20px;
-  }
-
-  .share-section {
-    padding: 30px 40px;
-    border-top: 1px solid var(--border-color);
-  }
-
-  .share-section h3 {
-    font-size: 1.2rem;
-    font-weight: 700;
     margin: 0 0 20px;
     color: var(--text-primary);
+  }
+
+  /* Copy notification */
+  .copy-notification {
+    background: var(--success-bg);
+    color: var(--success-text);
+    border-left: 4px solid var(--success-border);
+    padding: 12px 20px;
+    margin-bottom: 15px;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: slideIn 0.3s ease-out;
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .page-wrapper.dark .copy-notification {
+    background: #1b5e20;
+    color: #a5d6a7;
+    border-left-color: #66bb6a;
   }
 
   .share-buttons {
     display: flex;
-    gap: 15px;
     flex-wrap: wrap;
+    gap: 15px;
   }
 
   .share-btn {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 12px 24px;
+    padding: 12px 20px;
     border: none;
-    font-weight: 700;
+    font-weight: 600;
     font-size: 14px;
     cursor: pointer;
     transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-radius: 4px;
+    text-decoration: none;
+    flex: 1 1 auto;
+    min-width: 150px;
+    justify-content: center;
   }
 
-  .share-btn :global(svg) {
-    flex-shrink: 0;
+  .share-link {
+    background: var(--text-primary);
+    color: var(--bg-primary);
   }
 
-  .whatsapp-icon,
-  .twitter-x-icon {
-    flex-shrink: 0;
+  .share-link:hover {
+    background: var(--text-secondary);
   }
 
-  .share-btn.share-link {
-    background: #6c757d;
+  .whatsapp {
+    background: #25d366;
     color: white;
   }
 
-  .share-btn.share-link:hover {
-    background: #5a6268;
+  .whatsapp:hover {
+    background: #1da851;
   }
 
-  .share-btn.whatsapp {
-    background: #25D366;
-    color: white;
-  }
-
-  .share-btn.whatsapp:hover {
-    background: #20BA5A;
-  }
-
-  .share-btn.twitter {
+  .twitter {
     background: #000000;
     color: white;
   }
 
-  .share-btn.twitter:hover {
+  .twitter:hover {
     background: #333333;
   }
 
-  .page-wrapper.dark .share-btn.twitter {
-    background: #ffffff;
-    color: #000000;
-  }
-
-  .page-wrapper.dark .share-btn.twitter:hover {
-    background: #e0e0e0;
-  }
-
-  .share-btn.facebook {
-    background: #1877F2;
+  .facebook {
+    background: #1877f2;
     color: white;
   }
 
-  .share-btn.facebook:hover {
-    background: #165DC6;
+  .facebook:hover {
+    background: #145dbf;
   }
 
-  /* Similar Articles Section */
-  .similar-articles {
-    margin: 40px 0;
+  .whatsapp-icon,
+  .twitter-x-icon {
+    width: 18px;
+    height: 18px;
   }
 
+  /* Section Headers */
   .section-header {
-    margin-bottom: 30px;
-    border-bottom: 2px solid var(--border-color);
-    padding-bottom: 15px;
+    margin-bottom: 25px;
+    text-align: center;
   }
 
   .section-title {
-    font-size: 1.8rem;
-    font-weight: 700;
-    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 800;
     color: var(--text-primary);
+    margin: 0 0 15px;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
   }
 
   .section-divider {
     width: 80px;
     height: 3px;
     background: var(--accent-color);
-    margin-top: 10px;
+    margin: 0 auto;
+  }
+
+  /* More Articles Section */
+  .more-articles-section {
+    margin: 40px 0;
+  }
+
+  .more-articles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+    margin-bottom: 30px;
+  }
+
+  .more-article-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .more-article-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px var(--shadow-medium);
+  }
+
+  .more-article-image {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    background: var(--bg-secondary);
+  }
+
+  .more-article-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .more-article-card:hover .more-article-image img {
+    transform: scale(1.05);
+  }
+
+  .more-article-content {
+    padding: 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .more-article-content .category {
+    display: inline-block;
+    margin-bottom: 12px;
+  }
+
+  .more-article-content h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 10px;
+    color: var(--text-primary);
+    line-height: 1.3;
+  }
+
+  .more-article-content p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin: 0 0 15px;
+    flex: 1;
+  }
+
+  .more-article-content time {
+    color: var(--text-tertiary);
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+  }
+
+  .view-all-container {
+    text-align: center;
+    padding: 20px 0;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .view-all-btn {
+    display: inline-block;
+    background: var(--text-primary);
+    color: var(--bg-primary);
+    padding: 14px 32px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    border: 2px solid var(--text-primary);
+  }
+
+  .view-all-btn:hover {
+    background: transparent;
+    color: var(--text-primary);
+  }
+
+  /* Similar Articles Section */
+  .similar-articles {
+    margin: 40px 0;
   }
 
   .similar-grid {
@@ -800,13 +787,61 @@
     text-transform: uppercase;
   }
 
+  /* Loading and Error States */
+  .loading {
+    text-align: center;
+    padding: 60px 20px;
+  }
+
+  .spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid var(--border-color);
+    border-top-color: var(--accent-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .error {
+    text-align: center;
+    padding: 60px 20px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+  }
+
+  .error h2 {
+    color: var(--accent-color);
+    margin: 0 0 15px;
+  }
+
+  .btn-back {
+    display: inline-block;
+    background: var(--accent-color);
+    color: white;
+    padding: 12px 24px;
+    text-decoration: none;
+    font-weight: 600;
+    margin-top: 20px;
+    transition: background 0.3s ease;
+  }
+
+  .btn-back:hover {
+    background: var(--accent-hover);
+  }
+
+  /* Responsive Design */
   @media (max-width: 768px) {
     .article-page {
       padding: 20px 15px;
     }
 
     .article-header,
-    .article_body,
+    .article-body,
     .share-section {
       padding: 20px;
     }
@@ -817,6 +852,11 @@
 
     .article-summary {
       font-size: 1rem;
+    }
+
+    .article-body {
+      font-size: 1rem;
+      line-height: 1.7;
     }
 
     .share-btn {
@@ -837,18 +877,30 @@
       font-size: 1.4rem;
     }
 
-    .similar-grid {
+    .similar-grid,
+    .more-articles-grid {
       grid-template-columns: 1fr;
     }
 
-    .related-grid {
-      grid-template-columns: 1fr;
+    .copy-notification {
+      padding: 10px 15px;
+      font-size: 13px;
+    }
+
+    .view-all-btn {
+      padding: 12px 24px;
+      font-size: 12px;
     }
   }
 
   @media (max-width: 480px) {
     .share-btn {
       flex: 1 1 100%;
+    }
+
+    .more-articles-grid,
+    .similar-grid {
+      gap: 20px;
     }
   }
 </style>
