@@ -464,61 +464,39 @@ app.get('/image/:articleId', async (req, res) => {
     const parsedId = parseInt(articleId);
     
     if (isNaN(parsedId)) {
-      console.log('Invalid article ID format');
       return res.status(400).send('Invalid article ID');
     }
     
-    console.log(`Serving image for article ID: ${parsedId}`);
     const article = await articleService.getArticleById(parsedId);
     
     if (!article || !article.image || !article.image.data) {
-      console.log(`Image not found for article: ${parsedId}`);
       return res.status(404).send('Image not found');
     }
     
-    // Convert Buffer to actual image data if needed
-    let imageData = article.image.data;
-    if (imageData.buffer) {
-      imageData = Buffer.from(imageData.buffer);
-    } else if (!(imageData instanceof Buffer)) {
-      imageData = Buffer.from(imageData);
-    }
-    
-    // Determine content type
+    // Get the image buffer
+    const imageBuffer = article.image.data.buffer || article.image.data;
     const contentType = article.image.contentType || 'image/jpeg';
     
-    console.log(`Image details - Type: ${contentType}, Size: ${imageData.length} bytes`);
+    // Set headers
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Length', imageBuffer.length);
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.setHeader('Access-Control-Allow-Origin', '*');
     
-    // Set proper headers for social media crawlers
-    res.writeHead(200, {
-      'Content-Type': contentType,
-      'Content-Length': imageData.length,
-      'Content-Disposition': 'inline', // CRITICAL: Display inline, not as download
-      'Cache-Control': 'public, max-age=31536000, immutable',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
-      'Cross-Origin-Resource-Policy': 'cross-origin',
-      'X-Content-Type-Options': 'nosniff',
-      'Accept-Ranges': 'bytes'
-    });
-    
-    console.log(`Successfully serving image for article: ${parsedId}`);
-    res.end(imageData);
+    // Send the image
+    return res.send(Buffer.from(imageBuffer));
   } catch (error) {
     console.error('Error serving image:', error);
-    res.status(500).send('Error retrieving image');
+    return res.status(500).send('Error retrieving image');
   }
 });
 
 // Add OPTIONS handler for CORS preflight
 app.options('/image/:articleId', (req, res) => {
-  res.writeHead(204, {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
-    'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept',
-    'Access-Control-Max-Age': '86400'
-  });
-  res.end();
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  return res.sendStatus(204);
 });
 
 // Support HEAD requests for WhatsApp crawler
@@ -528,36 +506,27 @@ app.head('/image/:articleId', async (req, res) => {
     const parsedId = parseInt(articleId);
     
     if (isNaN(parsedId)) {
-      return res.status(400).end();
+      return res.sendStatus(400);
     }
     
     const article = await articleService.getArticleById(parsedId);
     
     if (!article || !article.image || !article.image.data) {
-      return res.status(404).end();
+      return res.sendStatus(404);
     }
     
-    let imageData = article.image.data;
-    if (imageData.buffer) {
-      imageData = Buffer.from(imageData.buffer);
-    } else if (!(imageData instanceof Buffer)) {
-      imageData = Buffer.from(imageData);
-    }
-    
+    const imageBuffer = article.image.data.buffer || article.image.data;
     const contentType = article.image.contentType || 'image/jpeg';
     
-    res.writeHead(200, {
-      'Content-Type': contentType,
-      'Content-Length': imageData.length,
-      'Content-Disposition': 'inline',
-      'Cache-Control': 'public, max-age=31536000',
-      'Access-Control-Allow-Origin': '*'
-    });
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Length', imageBuffer.length);
+    res.setHeader('Cache-Control', 'public, max-age=31536000');
+    res.setHeader('Access-Control-Allow-Origin', '*');
     
-    res.end();
+    return res.sendStatus(200);
   } catch (error) {
     console.error('Error in HEAD request:', error);
-    res.status(500).end();
+    return res.sendStatus(500);
   }
 });
 

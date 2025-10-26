@@ -70,10 +70,13 @@ const generateHash = (title, date) => {
 };
 
 // Create a new article
-const createArticle = async (title, summary, article_text, date, image, category, featured = false) => {
+const createArticle = async (title, summary, article_text, date, imageFile, category, featured = false) => {
   try {
     const articleDate = date ? new Date(date) : new Date();
     const hash = generateHash(title, articleDate);
+    
+    // Ensure image is stored as Buffer
+    const imageBuffer = Buffer.from(imageFile.buffer);
     
     const article = new Article({
       title,
@@ -81,9 +84,8 @@ const createArticle = async (title, summary, article_text, date, image, category
       article_text,
       date: articleDate,
       image: {
-        data: image.buffer,
-        contentType: image.mimetype,
-        filename: image.originalname
+        data: imageBuffer, // Must be Buffer
+        contentType: imageFile.mimetype // e.g., 'image/jpeg'
       },
       category,
       featured,
