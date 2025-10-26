@@ -34,10 +34,17 @@
     }
   }
   
-  // Improved image URL function
+  // Improved image URL function - MUST return absolute URL for social media
   function getImageUrl(id) {
     if (!id) return "https://placehold.co/800x400/2c2c2c/ffffff?text=NEWS";
+    // Return absolute URL for social media crawlers
     return `${API_URL}/image/${id}`;
+  }
+
+  // Get absolute URL for sharing
+  function getAbsoluteUrl() {
+    if (typeof window === 'undefined') return '';
+    return window.location.href;
   }
   
   // Function to format date
@@ -184,27 +191,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   {#if article}
-    <!-- Open Graph / Facebook Meta Tags -->
+    <!-- Canonical URL -->
+    <link rel="canonical" href={getAbsoluteUrl()} />
+    
+    <!-- Open Graph / Facebook / WhatsApp Meta Tags -->
     <meta property="og:type" content="article" />
-    <meta property="og:url" content={typeof window !== 'undefined' ? window.location.href : ''} />
+    <meta property="og:url" content={getAbsoluteUrl()} />
     <meta property="og:title" content={article.title} />
     <meta property="og:description" content={article.summary} />
     <meta property="og:image" content={getImageUrl(article.articleId)} />
+    <meta property="og:image:secure_url" content={getImageUrl(article.articleId)} />
+    <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={article.title} />
     <meta property="og:site_name" content="Political Gossips" />
+    <meta property="og:locale" content="en_US" />
     <meta property="article:published_time" content={article.date} />
     <meta property="article:section" content={article.category} />
+    <meta property="article:author" content="Political Gossips" />
     
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:url" content={typeof window !== 'undefined' ? window.location.href : ''} />
+    <meta name="twitter:site" content="@politicalgossips" />
+    <meta name="twitter:url" content={getAbsoluteUrl()} />
     <meta name="twitter:title" content={article.title} />
     <meta name="twitter:description" content={article.summary} />
     <meta name="twitter:image" content={getImageUrl(article.articleId)} />
+    <meta name="twitter:image:alt" content={article.title} />
     
-    <!-- WhatsApp Meta Tags (uses Open Graph) -->
-    <meta property="og:image:alt" content={article.title} />
+    <!-- Additional WhatsApp optimization -->
+    <meta property="og:updated_time" content={article.date} />
   {/if}
 </svelte:head>
 
