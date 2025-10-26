@@ -37,7 +37,7 @@
     }
   }
   
-  // Get absolute image URL for social media - MUST return full URL
+  // Get absolute image URL for social media
   function getImageUrl(articleId) {
     if (!articleId) {
       return `${API_URL}/image/1`;
@@ -48,13 +48,12 @@
   // Get absolute URL for sharing
   function getAbsoluteUrl() {
     if (typeof window === 'undefined') {
-      // Server-side: construct URL from page store
       return `https://www.politicalgossips.com/article?id=${articleId}`;
     }
     return window.location.href;
   }
   
-  // Improved image URL function for displaying in the page
+  // Get article image URL
   function getArticleImageUrl(articleId) {
     if (!articleId) return "";
     return `${API_URL}/image/${articleId}`;
@@ -98,7 +97,6 @@
       const response = await fetch(`${API_URL}/api/articles/category/${category}?limit=3`);
       if (response.ok) {
         const articles = await response.json();
-        // Filter out the current article
         relatedArticles = articles.filter(a => a.articleId !== parseInt(currentId));
       }
     } catch (err) {
@@ -126,57 +124,35 @@
 
 <svelte:head>
   <title>{article ? article.title + ' - Political Gossips' : 'Article - Political Gossips'}</title>
-  
-  <!-- Standard Meta Tags -->
   <meta name="description" content={article ? article.summary : 'Independent investigative journalism exposing political corruption'} />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <!-- Always render OG tags, even if article is null (for SSR) -->
   <link rel="canonical" href={getAbsoluteUrl()} />
   
-  <!-- Open Graph / Facebook / WhatsApp Meta Tags -->
+  <!-- Open Graph Meta Tags -->
   <meta property="og:type" content="article" />
   <meta property="og:url" content={getAbsoluteUrl()} />
   <meta property="og:title" content={article ? article.title : 'Political Gossips'} />
   <meta property="og:description" content={article ? article.summary : 'Independent investigative journalism'} />
   <meta property="og:site_name" content="Political Gossips" />
-  
-  <!-- EXPLICIT og:image - always present -->
   <meta property="og:image" content={article && article.articleId ? getImageUrl(article.articleId) : getImageUrl(1)} />
   <meta property="og:image:secure_url" content={article && article.articleId ? getImageUrl(article.articleId) : getImageUrl(1)} />
   <meta property="og:image:type" content="image/jpeg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content={article ? article.title : 'Political Gossips'} />
   
   {#if article}
-    <!-- Additional article metadata -->
-    <meta property="og:locale" content="en_US" />
     <meta property="article:published_time" content={article.date} />
-    <meta property="article:modified_time" content={article.updatedAt || article.date} />
     <meta property="article:section" content={article.category} />
-    <meta property="article:tag" content={article.category} />
-    <meta property="article:author" content="Political Gossips" />
   {/if}
   
   <!-- Twitter Card Meta Tags -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:site" content="@politicalgossips" />
-  <meta name="twitter:creator" content="@politicalgossips" />
-  <meta name="twitter:url" content={getAbsoluteUrl()} />
   <meta name="twitter:title" content={article ? article.title : 'Political Gossips'} />
   <meta name="twitter:description" content={article ? article.summary : 'Independent investigative journalism'} />
   <meta name="twitter:image" content={article && article.articleId ? getImageUrl(article.articleId) : getImageUrl(1)} />
-  <meta name="twitter:image:alt" content={article ? article.title : 'Political Gossips'} />
-  
-  {#if article}
-    <!-- Additional meta for better SEO -->
-    <meta name="author" content="Political Gossips" />
-    <meta name="publish_date" property="og:publish_date" content={article.date} />
-  {/if}
 </svelte:head>
 
-<div class="page-wrapper">
+<div class="page-wrapper" class:dark={$theme === 'dark'}>
   <NavBar links={navLinks} />
   
   <main class="article-page">
@@ -274,18 +250,12 @@
 </div>
 
 <style>
-  /* Import matching styles from main page */
   :global(body) {
     margin: 0;
     padding: 0;
     font-family: 'Helvetica Neue', Arial, sans-serif;
-    line-height: 1.5;
-    font-size: 16px;
-    transition: background-color 0.3s ease, color 0.3s ease;
     background-color: #fafafa;
     color: #1a1a1a;
-    font-weight: 400;
-    overflow-x: hidden;
   }
 
   :global(body.dark) {
@@ -293,742 +263,294 @@
     color: #e5e5e5;
   }
 
-  /* CSS Custom Properties - Matching main page */
-  .site-wrapper {
+  .page-wrapper {
     --bg-primary: #ffffff;
     --bg-secondary: #f8f8f8;
-    --bg-tertiary: #e8e8e8;
     --text-primary: #1a1a1a;
     --text-secondary: #4a4a4a;
     --text-tertiary: #666666;
-    --text-muted: #888888;
     --border-color: #d0d0d0;
-    --border-light: #e8e8e8;
-    --shadow-light: rgba(0, 0, 0, 0.05);
-    --shadow-medium: rgba(0, 0, 0, 0.1);
-    --shadow-heavy: rgba(0, 0, 0, 0.2);
     --accent-color: #d73027;
     --accent-hover: #b71c1c;
-    --warning-color: #f57c00;
-    --success-bg: #e8f5e8;
-    --success-text: #2e7d32;
-    --success-border: #4caf50;
-    --error-bg: #ffebee;
-    --error-text: #c62828;
-    --error-border: #e57373;
     
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
     padding-top: 80px;
-    transition: all 0.3s ease;
-    width: 100%;
-    box-sizing: border-box;
   }
 
-  .site-wrapper.dark {
+  .page-wrapper.dark {
     --bg-primary: #0f0f0f;
     --bg-secondary: #1a1a1a;
-    --bg-tertiary: #2a2a2a;
     --text-primary: #e5e5e5;
     --text-secondary: #b8b8b8;
     --text-tertiary: #888888;
-    --text-muted: #666666;
     --border-color: #333333;
-    --border-light: #2a2a2a;
-    --shadow-light: rgba(0, 0, 0, 0.3);
-    --shadow-medium: rgba(0, 0, 0, 0.5);
-    --shadow-heavy: rgba(0, 0, 0, 0.7);
     --accent-color: #ef5350;
     --accent-hover: #d32f2f;
-    --warning-color: #ff9800;
   }
 
-  /* Main Content - Mobile first */
-  .main-content {
-    flex: 1;
-    max-width: 1000px;
+  .article-page {
+    max-width: 900px;
     margin: 0 auto;
-    width: 100%;
-    padding: 15px;
-    box-sizing: border-box;
+    padding: 40px 20px;
   }
 
-  /* Article Main - Mobile optimized */
-  .article-main {
+  .article-content {
     background: var(--bg-primary);
     border: 1px solid var(--border-color);
-    box-shadow: 0 2px 10px var(--shadow-light);
-    margin-bottom: 30px;
-    border-radius: 0;
-    overflow: hidden;
+    margin-bottom: 40px;
   }
 
   .article-header {
-    padding: 20px 15px;
-    border-bottom: 1px solid var(--border-light);
+    padding: 40px;
+    border-bottom: 1px solid var(--border-color);
   }
 
   .article-meta {
     display: flex;
     align-items: center;
     gap: 15px;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
+    margin-bottom: 20px;
   }
 
-  .article-category {
+  .category {
     background: var(--accent-color);
     color: white;
     padding: 6px 12px;
     font-size: 11px;
-    font-weight: 900;
-    letter-spacing: 1.5px;
+    font-weight: 700;
     text-transform: uppercase;
-    white-space: nowrap;
+    letter-spacing: 1px;
   }
 
-  .article-date {
+  time {
     color: var(--text-tertiary);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
   }
 
   .article-title {
-    font-size: 1.6rem;
+    font-size: 2.5rem;
     font-weight: 700;
     color: var(--text-primary);
     margin: 0 0 20px;
-    line-height: 1.3;
-    letter-spacing: -0.5px;
+    line-height: 1.2;
   }
 
-  .article-lead {
-    background: var(--bg-secondary);
-    padding: 20px 15px;
-    border-left: 4px solid var(--accent-color);
-    margin: 0 -15px;
-  }
-
-  .summary-text {
-    font-size: 1rem;
-    font-weight: 500;
+  .article-summary {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
     font-style: italic;
-    color: var(--text-primary);
-    line-height: 1.6;
     margin: 0;
-  }
-
-  .article-image-container {
-    position: relative;
-    overflow: hidden;
-    width: 100%;
-    /* Mobile: adapt to image but with constraints */
-    min-height: 200px;
-    max-height: 500px;
-    background: var(--bg-secondary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    line-height: 1.6;
   }
 
   .article-image {
     width: 100%;
-    height: 100%;
-    /* Cover ensures image fills container, zooming if needed */
-    object-fit: cover;
-    object-position: center;
-    filter: grayscale(20%);
-    display: block;
+    overflow: hidden;
   }
 
-  .article-content {
-    padding: 20px 15px;
+  .article-image img {
+    width: 100%;
+    height: auto;
+    display: block;
   }
 
   .article-body {
+    padding: 40px;
     color: var(--text-secondary);
-    line-height: 1.9;
-    margin-bottom: 30px;
+    line-height: 1.8;
+    font-size: 1.1rem;
   }
 
-  .article-body p {
-    margin-bottom: 18px;
-    font-size: 1rem;
-    line-height: 2;
+  .article-body :global(p) {
+    margin-bottom: 20px;
   }
 
-  .article-body br {
-    display: block;
-    content: "";
-    margin-top: 0.5em;
+  .share-section {
+    padding: 30px 40px;
+    border-top: 1px solid var(--border-color);
   }
 
-  .article-footer {
-    border-top: 2px solid var(--border-color);
-    padding-top: 20px;
+  .share-section h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 0 0 20px;
+    color: var(--text-primary);
   }
 
-  .article-actions {
+  .share-buttons {
     display: flex;
     gap: 15px;
-    flex-direction: column;
+    flex-wrap: wrap;
   }
 
-  .action-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 14px 20px;
+  .share-btn {
+    padding: 12px 24px;
+    border: none;
     font-weight: 700;
+    font-size: 14px;
     cursor: pointer;
     transition: all 0.3s ease;
-    text-align: center;
-    text-decoration: none;
-    border: none;
-    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .share-btn.whatsapp {
+    background: #25D366;
+    color: white;
+  }
+
+  .share-btn.whatsapp:hover {
+    background: #128C7E;
+  }
+
+  .share-btn.facebook {
+    background: #1877F2;
+    color: white;
+  }
+
+  .share-btn.facebook:hover {
+    background: #145DBF;
+  }
+
+  .share-btn.twitter {
+    background: #1DA1F2;
+    color: white;
+  }
+
+  .share-btn.twitter:hover {
+    background: #0C85D0;
+  }
+
+  .related-articles {
+    margin-top: 60px;
+  }
+
+  .related-articles h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0 0 30px;
+    color: var(--text-primary);
     text-transform: uppercase;
     letter-spacing: 1px;
-    font-family: inherit;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .action-btn.primary {
-    background: var(--text-primary);
-    color: var(--bg-primary);
-  }
-
-  .action-btn.primary:hover {
-    background: var(--accent-color);
-  }
-
-  .action-btn.secondary {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-    border: 2px solid var(--border-color);
-  }
-
-  .action-btn.secondary:hover {
-    background: var(--accent-color);
-    color: white;
-    border-color: var(--accent-color);
-  }
-
-  /* Section Headers - Mobile optimized */
-  .section-header {
-    margin-bottom: 25px;
-    border-bottom: 2px solid var(--border-color);
-    padding-bottom: 12px;
-  }
-
-  .section-title {
-    font-size: 1.2rem;
-    font-weight: 800;
-    color: var(--text-primary);
-    margin: 0;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-  }
-
-  .section-divider {
-    width: 60px;
-    height: 3px;
-    background: var(--accent-color);
-    border: none;
-    margin-top: 8px;
-  }
-
-  /* Related Articles Section - Mobile first */
-  .related-section {
-    margin-bottom: 30px;
   }
 
   .related-grid {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
   }
 
   .related-card {
     background: var(--bg-primary);
     border: 1px solid var(--border-color);
-    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
     transition: all 0.3s ease;
-    box-shadow: 0 1px 3px var(--shadow-light);
-    cursor: pointer;
+    overflow: hidden;
   }
 
   .related-card:hover {
-    box-shadow: 0 4px 15px var(--shadow-medium);
-    transform: translateY(-2px);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
   }
 
-  .related-image-container {
-    position: relative;
-    overflow: hidden;
+  .related-card img {
     width: 100%;
-    /* Mobile: adapt to image but with constraints */
-    min-height: 150px;
-    max-height: 400px;
-    background: var(--bg-secondary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .related-image {
-    width: 100%;
-    height: 100%;
-    /* Cover ensures image fills container, zooming if needed */
+    height: 200px;
     object-fit: cover;
-    object-position: center;
-    filter: grayscale(30%);
-    transition: filter 0.3s ease;
-    display: block;
-  }
-
-  .related-overlay {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    right: auto;
-    bottom: auto;
-    background: none;
-    display: flex;
-    align-items: flex-start;
-    padding: 0;
-  }
-
-  .related-category {
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 6px 12px;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
   }
 
   .related-content {
     padding: 20px;
   }
 
-  .related-title {
-    margin: 0 0 12px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    line-height: 1.3;
-  }
-
-  .related-title a {
-    color: var(--text-primary);
-    text-decoration: none;
-    transition: color 0.3s ease;
-  }
-
-  .related-title a:hover {
-    color: var(--accent-color);
-  }
-
-  .related-summary {
-    color: var(--text-secondary);
-    margin: 0 0 15px;
-    font-size: 0.9rem;
-    line-height: 1.4;
-  }
-
-  .related-meta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-top: 1px solid var(--border-light);
-    padding-top: 10px;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .related-date {
-    color: var(--text-tertiary);
-    font-weight: 500;
-  }
-
-  .read-time {
-    color: var(--text-muted);
-    font-weight: 500;
-  }
-
-  /* Error and Loading States - Mobile optimized */
-  .error-section,
-  .loading-section {
-    padding: 40px 15px;
-    text-align: center;
-  }
-
-  .error-container {
-    background: var(--error-bg);
-    border: 1px solid var(--error-border);
-    border-left: 4px solid var(--error-border);
-    padding: 30px 20px;
-    max-width: 600px;
-    margin: 0 auto;
-  }
-
-  .error-container h2 {
-    color: var(--error-text);
-    margin: 0 0 15px;
-    font-size: 1.3rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-
-  .error-container p {
-    color: var(--error-text);
-    margin: 0 0 25px;
-    font-size: 1rem;
-    line-height: 1.5;
-  }
-
-  .error-btn {
-    background: var(--error-text);
-    color: white;
-    padding: 12px 20px;
-    text-decoration: none;
-    font-weight: 700;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    transition: all 0.3s ease;
+  .related-content .category {
     display: inline-block;
-    width: 100%;
-    max-width: 250px;
+    margin-bottom: 12px;
+  }
+
+  .related-content h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 10px;
+    color: var(--text-primary);
+  }
+
+  .related-content p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  .loading {
     text-align: center;
-    box-sizing: border-box;
-  }
-
-  .error-btn:hover {
-    background: var(--accent-color);
-  }
-
-  .loading-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
     padding: 60px 20px;
-    text-align: center;
   }
 
-  .loading-spinner {
-    width: 35px;
-    height: 35px;
-    border: 3px solid var(--border-color);
-    border-radius: 50%;
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border-color);
     border-top-color: var(--accent-color);
-    animation: spin 1s ease-in-out infinite;
-    margin-bottom: 15px;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
   }
 
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
 
-  /* Footer - Mobile optimized */
-  .site-footer {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-    padding: 40px 0 20px;
-    margin-top: auto;
-    border-top: 3px solid var(--accent-color);
-  }
-
-  .footer-content {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 15px;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 30px;
-  }
-
-  .footer-section h4 {
-    font-size: 1rem;
-    font-weight: 800;
-    margin: 0 0 15px;
-    color: var(--text-primary);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-
-  .footer-section p {
-    color: var(--text-secondary);
-    margin: 0;
-    line-height: 1.6;
-    font-size: 0.9rem;
-  }
-
-  .footer-links {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  .footer-links li {
-    margin-bottom: 8px;
-  }
-
-  .footer-links a {
-    color: var(--text-secondary);
-    text-decoration: none;
-    transition: color 0.3s ease;
-    font-size: 0.9rem;
-    font-weight: 500;
-  }
-
-  .footer-links a:hover {
-    color: var(--accent-color);
-  }
-
-  .footer-bottom {
-    border-top: 1px solid var(--border-color);
-    margin-top: 30px;
-    padding-top: 20px;
+  .error {
     text-align: center;
+    padding: 60px 20px;
   }
 
-  .copyright {
-    color: var(--text-tertiary);
-    font-size: 0.85rem;
-    font-weight: 500;
-    padding: 0 10px;
+  .error h2 {
+    color: var(--accent-color);
+    margin-bottom: 20px;
   }
 
-  /* Tablet Responsive Design */
-  @media (min-width: 768px) {
-    .main-content {
-      padding: 0 30px;
+  .btn-back {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 12px 24px;
+    background: var(--accent-color);
+    color: white;
+    text-decoration: none;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .btn-back:hover {
+    background: var(--accent-hover);
+  }
+
+  @media (max-width: 768px) {
+    .article-page {
+      padding: 20px 15px;
     }
 
-    .article-header {
-      padding: 40px 50px 30px;
-    }
-
-    .article-content {
-      padding: 40px 50px;
+    .article-header,
+    .article-body,
+    .share-section {
+      padding: 20px;
     }
 
     .article-title {
-      font-size: 2.2rem;
-      margin-bottom: 25px;
+      font-size: 1.8rem;
     }
 
-    .article-lead {
-      padding: 25px;
-      margin: 0 -25px;
-    }
-
-    .summary-text {
-      font-size: 1.2rem;
-    }
-
-    .article-image-container {
-      /* Desktop: flexible height to accommodate tall images */
-      min-height: 300px;
-      max-height: 700px;
-      height: auto;
-    }
-
-    .article-image {
-      /* Cover zooms short images, but container can grow for tall images */
-      object-fit: cover;
-      min-height: 300px;
+    .article-summary {
+      font-size: 1rem;
     }
 
     .related-grid {
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 30px;
+      grid-template-columns: 1fr;
     }
-
-    .related-overlay {
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.7));
-      display: flex;
-      align-items: flex-end;
-      padding: 15px;
-    }
-
-    .related-category {
-      background: rgba(255, 255, 255, 0.9);
-      color: var(--text-primary);
-    }
-
-    .footer-content {
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 40px;
-    }
-
-    .section-title {
-      font-size: 1.4rem;
-      letter-spacing: 2px;
-    }
-
-    .section-divider {
-      width: 80px;
-    }
-  }
-
-  /* Desktop Responsive Design */
-  @media (min-width: 1024px) {
-    .article-title {
-      font-size: 2.5rem;
-    }
-
-    .article-header {
-      padding: 50px 60px 40px;
-    }
-
-    .article-content {
-      padding: 50px 60px;
-    }
-
-    /* Main article images can be even taller on large screens */
-    .article-image-container {
-      min-height: 400px;
-      max-height: 800px;
-    }
-
-    .article-image {
-      min-height: 400px;
-    }
-
-    /* Related cards slightly taller */
-    .related-image-container {
-      height: 280px;
-      min-height: 280px;
-      max-height: 280px;
-    }
-  }
-
-  /* Mobile specific optimizations */
-  @media (max-width: 480px) {
-    .site-wrapper {
-      padding-top: 70px;
-    }
-
-    .main-content {
-      padding: 0 10px;
-    }
-
-    .article-header {
-      padding: 15px 12px;
-    }
-
-    .article-content {
-      padding: 15px 12px;
-    }
-
-    .article-title {
-      font-size: 1.4rem;
-      margin-bottom: 15px;
-    }
-
-    .article-lead {
-      padding: 15px 12px;
-      margin: 0 -12px;
-    }
-
-    .summary-text {
-      font-size: 0.95rem;
-    }
-
-    .article-image-container {
-      min-height: 180px;
-      max-height: 450px;
-    }
-
-    .related-image-container {
-      min-height: 140px;
-      max-height: 350px;
-    }
-  }
-
-  /* Extra small screens */
-  @media (max-width: 320px) {
-    .article-title {
-      font-size: 1.2rem;
-    }
-
-    .article-header {
-      padding: 12px 10px;
-    }
-
-    .article-content {
-      padding: 12px 10px;
-    }
-
-    .related-content {
-      padding: 12px;
-    }
-
-    .action-btn {
-      padding: 12px 16px;
-      font-size: 11px;
-    }
-
-    .article-image-container {
-      min-height: 150px;
-      max-height: 400px;
-    }
-
-    .related-image-container {
-      min-height: 120px;
-      max-height: 300px;
-    }
-  }
-
-  /* Focus states for accessibility */
-  .action-btn:focus,
-  .error-btn:focus {
-    outline: 3px solid rgba(215, 48, 39, 0.5);
-    outline-offset: 2px;
-  }
-
-  /* Smooth scrolling */
-  html {
-    scroll-behavior: smooth;
-  }
-
-  /* Selection styling */
-  ::selection {
-    background: var(--accent-color);
-    color: white;
-  }
-
-  /* Improve touch targets on mobile */
-  @media (max-width: 768px) {
-    .related-title a {
-      display: block;
-      padding: 5px 0;
-    }
-  }
-
-  /* Add styles for related card links */
-  .related-card-link {
-    text-decoration: none;
-    color: inherit;
-    display: block;
-    height: 100%;
-  }
-
-  .related-card-link:focus {
-    outline: 3px solid rgba(215, 48, 39, 0.5);
-    outline-offset: 2px;
   }
 </style>
