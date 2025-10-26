@@ -6,6 +6,9 @@
   import { theme } from '$lib/stores/theme';
   import '$lib/styles/theme.css';
 
+  // Get server-side loaded data
+  export let data;
+
   // Navigation links for the navbar
   const navLinks = [
     { href: "/", label: "HOME", active: false },
@@ -15,11 +18,11 @@
     { href: "/contact", label: "CONTACT US", active: false },
   ];
   
-  // States
-  let article = null;
+  // States - initialize with server data
+  let article = data.article;
   let relatedArticles = [];
-  let loading = true;
-  let error = null;
+  let loading = false;
+  let error = data.error;
   
   // Get article ID from URL query parameters
   $: articleId = $page.url.searchParams.get('id');
@@ -37,15 +40,17 @@
   // Get absolute image URL for social media - MUST return full URL
   function getImageUrl(articleId) {
     if (!articleId) {
-      // Return your actual default image from backend instead of placehold.co
-      return `${API_URL}/image/1`; // Make sure article ID 1 exists in your database
+      return `${API_URL}/image/1`;
     }
     return `${API_URL}/image/${articleId}`;
   }
 
   // Get absolute URL for sharing
   function getAbsoluteUrl() {
-    if (typeof window === 'undefined') return '';
+    if (typeof window === 'undefined') {
+      // Server-side: construct URL from page store
+      return `https://www.politicalgossips.com/article?id=${articleId}`;
+    }
     return window.location.href;
   }
   
@@ -126,25 +131,25 @@
   <meta name="description" content={article ? article.summary : 'Independent investigative journalism exposing political corruption'} />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  {#if article && article.articleId}
-    <!-- Canonical URL -->
-    <link rel="canonical" href={getAbsoluteUrl()} />
-    
-    <!-- Open Graph / Facebook / WhatsApp Meta Tags -->
-    <meta property="og:type" content="article" />
-    <meta property="og:url" content={getAbsoluteUrl()} />
-    <meta property="og:title" content={article.title} />
-    <meta property="og:description" content={article.summary} />
-    <meta property="og:site_name" content="Political Gossips" />
-    
-    <!-- EXPLICIT og:image with actual article image -->
-    <meta property="og:image" content={getImageUrl(article.articleId)} />
-    <meta property="og:image:secure_url" content={getImageUrl(article.articleId)} />
-    <meta property="og:image:type" content="image/jpeg" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content={article.title} />
-    
+  <!-- Always render OG tags, even if article is null (for SSR) -->
+  <link rel="canonical" href={getAbsoluteUrl()} />
+  
+  <!-- Open Graph / Facebook / WhatsApp Meta Tags -->
+  <meta property="og:type" content="article" />
+  <meta property="og:url" content={getAbsoluteUrl()} />
+  <meta property="og:title" content={article ? article.title : 'Political Gossips'} />
+  <meta property="og:description" content={article ? article.summary : 'Independent investigative journalism'} />
+  <meta property="og:site_name" content="Political Gossips" />
+  
+  <!-- EXPLICIT og:image - always present -->
+  <meta property="og:image" content={article && article.articleId ? getImageUrl(article.articleId) : getImageUrl(1)} />
+  <meta property="og:image:secure_url" content={article && article.articleId ? getImageUrl(article.articleId) : getImageUrl(1)} />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content={article ? article.title : 'Political Gossips'} />
+  
+  {#if article}
     <!-- Additional article metadata -->
     <meta property="og:locale" content="en_US" />
     <meta property="article:published_time" content={article.date} />
@@ -152,17 +157,19 @@
     <meta property="article:section" content={article.category} />
     <meta property="article:tag" content={article.category} />
     <meta property="article:author" content="Political Gossips" />
-    
-    <!-- Twitter Card Meta Tags -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@politicalgossips" />
-    <meta name="twitter:creator" content="@politicalgossips" />
-    <meta name="twitter:url" content={getAbsoluteUrl()} />
-    <meta name="twitter:title" content={article.title} />
-    <meta name="twitter:description" content={article.summary} />
-    <meta name="twitter:image" content={getImageUrl(article.articleId)} />
-    <meta name="twitter:image:alt" content={article.title} />
-    
+  {/if}
+  
+  <!-- Twitter Card Meta Tags -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@politicalgossips" />
+  <meta name="twitter:creator" content="@politicalgossips" />
+  <meta name="twitter:url" content={getAbsoluteUrl()} />
+  <meta name="twitter:title" content={article ? article.title : 'Political Gossips'} />
+  <meta name="twitter:description" content={article ? article.summary : 'Independent investigative journalism'} />
+  <meta name="twitter:image" content={article && article.articleId ? getImageUrl(article.articleId) : getImageUrl(1)} />
+  <meta name="twitter:image:alt" content={article ? article.title : 'Political Gossips'} />
+  
+  {#if article}
     <!-- Additional meta for better SEO -->
     <meta name="author" content="Political Gossips" />
     <meta name="publish_date" property="og:publish_date" content={article.date} />
