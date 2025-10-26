@@ -39,7 +39,7 @@
       error = null;
       
       // Build URL with search parameter if provided
-      let url = `${PUBLIC_API_URL}/articles/category/${categoryName}`;
+      let url = `${PUBLIC_API_URL}/api/articles/category/${categoryName}`;
       if (search) {
         url += `?search=${encodeURIComponent(search)}`;
       }
@@ -94,7 +94,7 @@
   // Function to fetch latest articles for sidebar
   async function fetchLatestSidebar() {
     try {
-      const response = await fetch(`${PUBLIC_API_URL}/articles/latest?limit=5`);
+      const response = await fetch(`${PUBLIC_API_URL}/api/articles/latest?limit=5`);
       if (!response.ok) {
         console.warn('Failed to fetch sidebar articles');
         return [];

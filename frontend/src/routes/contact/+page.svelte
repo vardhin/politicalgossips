@@ -39,7 +39,7 @@
       contactResult = null;
 
       // Create EmailJS service or use your backend API
-      const response = await fetch(`${PUBLIC_API_URL}/contact`, {
+      const response = await fetch(`${PUBLIC_API_URL}/api/contact`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
