@@ -3,6 +3,7 @@
   import { onMount } from 'svelte';
   import { PUBLIC_API_URL } from '$env/static/public';
   import NavBar from '../../../lib/components/NavBar.svelte';
+  import ArticleCard from '../../../lib/components/article_card.svelte';
   import { theme } from '../../../lib/stores/theme';
 
   // Get the category from the URL parameter
@@ -207,31 +208,7 @@
               <div class="section-divider"></div>
             </div>
             
-            <article class="featured-article">
-              <div class="featured-content-wrapper">
-                <div class="featured-image-container">
-                  <img 
-                    src={featuredArticle.image} 
-                    alt={featuredArticle.title}
-                    class="featured-image"
-                    on:error={(e) => e.target.src = "https://placehold.co/600x400/2c2c2c/ffffff?text=NEWS"}
-                  />
-                  <div class="featured-overlay">
-                    <span class="featured-badge">EXCLUSIVE</span>
-                  </div>
-                </div>
-                <div class="featured-text-content">
-                  <span class="featured-category">{featuredArticle.category}</span>
-                  <h3 class="featured-title">{featuredArticle.title}</h3>
-                  <p class="featured-excerpt">{featuredArticle.excerpt}</p>
-                  <div class="featured-meta">
-                    <span class="featured-date">{featuredArticle.date}</span>
-                    <span class="read-time">{featuredArticle.readTime} min read</span>
-                    <a href={`/article?id=${featuredArticle.id}&slug=${slugify(featuredArticle.title)}`} class="featured-cta">READ MORE</a>
-                  </div>
-                </div>
-              </div>
-            </article>
+            <ArticleCard article={featuredArticle} featured={true} {slugify} />
           </section>
         {/if}
 
@@ -271,32 +248,7 @@
           {:else}
             <div class="articles-grid">
               {#each articles as article}
-                <article class="article-card">
-                  <div class="article-content-wrapper">
-                    <div class="article-image-container">
-                      <img 
-                        src={article.image} 
-                        alt={article.title}
-                        class="article-image"
-                        on:error={(e) => e.target.src = "https://placehold.co/400x250/2c2c2c/ffffff?text=REPORT"}
-                      />
-                      <div class="article-overlay">
-                        <span class="article-category">{article.category}</span>
-                      </div>
-                    </div>
-                    <div class="article-text-content">
-                      <h3 class="article-title">
-                        <a href={`/article?id=${article.id}&slug=${slugify(article.title)}`}>{article.title}</a>
-                      </h3>
-                      <p class="article-excerpt">{article.excerpt}</p>
-                      <div class="article-meta">
-                        <time class="article-date">{article.date}</time>
-                        <span class="read-time">{article.readTime} min read</span>
-                        <a href={`/article?id=${article.id}&slug=${slugify(article.title)}`} class="read-more">READ MORE</a>
-                      </div>
-                    </div>
-                  </div>
-                </article>
+                <ArticleCard {article} {slugify} />
               {/each}
             </div>
           {/if}
@@ -624,230 +576,13 @@
     margin-top: 8px;
   }
 
-  /* Featured Article - Mobile first */
-  .featured-article {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    overflow: hidden;
-    box-shadow: 0 2px 10px var(--shadow-light);
-    margin-bottom: 30px;
-  }
 
-  .featured-content-wrapper {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 0;
-  }
-
-  .featured-image-container {
-    position: relative;
-    overflow: hidden;
-    height: 200px;
-    order: 1;
-  }
-
-  .featured-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    filter: grayscale(20%);
-  }
-
-  .featured-overlay {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-  }
-
-  .featured-badge {
-    background: var(--accent-color);
-    color: white;
-    padding: 6px 12px;
-    font-size: 10px;
-    font-weight: 900;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-  }
-
-  .featured-text-content {
-    padding: 20px 15px;
-    display: flex;
-    flex-direction: column;
-    order: 2;
-  }
-
-  .featured-category {
-    color: var(--text-secondary);
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 10px;
-  }
-
-  .featured-title {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0 0 12px;
-    line-height: 1.2;
-  }
-
-  .featured-excerpt {
-    color: var(--text-secondary);
-    margin: 0 0 15px;
-    line-height: 1.5;
-    flex: 1;
-    font-size: 0.95rem;
-  }
-
-  .featured-meta {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-top: auto;
-    flex-wrap: wrap;
-  }
-
-  .featured-date {
-    color: var(--text-tertiary);
-    font-size: 12px;
-    font-weight: 500;
-    text-transform: uppercase;
-  }
 
   .read-time {
     color: var(--text-muted);
     font-size: 11px;
     font-weight: 500;
     text-transform: uppercase;
-  }
-
-  .featured-cta {
-    background: var(--text-primary);
-    color: var(--bg-primary);
-    padding: 8px 16px;
-    text-decoration: none;
-    font-weight: 700;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    transition: background-color 0.3s ease;
-    margin-left: auto;
-    white-space: nowrap;
-  }
-
-  .featured-cta:hover {
-    background: var(--accent-color);
-  }
-
-  /* Articles Grid - Mobile first */
-  .articles-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 20px;
-    margin-bottom: 30px;
-  }
-
-  /* Article Cards - Mobile optimized */
-  .article-card {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    overflow: hidden;
-    transition: all 0.3s ease;
-    box-shadow: 0 1px 3px var(--shadow-light);
-  }
-
-  .article-card:hover {
-    box-shadow: 0 4px 15px var(--shadow-medium);
-  }
-
-  .article-content-wrapper {
-    display: block;
-  }
-
-  .article-image-container {
-    position: relative;
-    overflow: hidden;
-    height: 180px;
-  }
-
-  .article-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    filter: grayscale(30%);
-    transition: filter 0.3s ease;
-  }
-
-  .article-card:hover .article-image {
-    filter: grayscale(0%);
-  }
-
-  .article-overlay {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-  }
-
-  .article-category {
-    background: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 4px 8px;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-
-  .article-text-content {
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .article-title {
-    margin: 0 0 10px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    line-height: 1.3;
-  }
-
-  .article-title a {
-    color: var(--text-primary);
-    text-decoration: none;
-    transition: color 0.3s ease;
-  }
-
-  .article-title a:hover {
-    color: var(--accent-color);
-  }
-
-  .article-excerpt {
-    color: var(--text-secondary);
-    margin: 0 0 15px;
-    font-size: 0.9rem;
-    line-height: 1.4;
-    flex: 1;
-  }
-
-  .article-meta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-top: 1px solid var(--border-light);
-    padding-top: 10px;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-top: auto;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .article-date {
-    color: var(--text-tertiary);
-    font-weight: 500;
   }
 
   .read-more {
@@ -1200,47 +935,6 @@
 
     .search-container {
       max-width: 400px;
-    }
-
-    .featured-content-wrapper {
-      grid-template-columns: 1fr 1.2fr;
-      min-height: 300px;
-    }
-
-    .featured-image-container {
-      height: auto;
-      order: 0;
-    }
-
-    .featured-text-content {
-      padding: 30px;
-      order: 0;
-    }
-
-    .article-content-wrapper {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      min-height: 180px;
-    }
-
-    .article-image-container {
-      height: auto;
-    }
-
-    .article-overlay {
-      top: auto;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.7));
-      display: flex;
-      align-items: flex-end;
-      padding: 10px;
-    }
-
-    .article-category {
-      background: rgba(255, 255, 255, 0.9);
-      color: var(--text-primary);
     }
 
     .articles-grid {
