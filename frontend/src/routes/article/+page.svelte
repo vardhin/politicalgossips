@@ -252,7 +252,16 @@
         <div class="article-content">
           <div class="article-body">
             {#each article.article_text.split('\n\n') as paragraph}
-              <p>{paragraph}</p>
+              <p>
+                {#each paragraph.split('.') as sentence, i}
+                  {#if sentence.trim()}
+                    {sentence.trim()}.
+                    {#if i < paragraph.split('.').length - 1}
+                      <br /><br />
+                    {/if}
+                  {/if}
+                {/each}
+              </p>
             {/each}
           </div>
           
@@ -492,11 +501,20 @@
   .article-image-container {
     position: relative;
     overflow: hidden;
+    width: 100%;
+    /* Mobile: adapt to image but with constraints */
+    min-height: 200px;
+    max-height: 500px;
+    background: var(--bg-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .article-image {
     width: 100%;
-    height: 250px;
+    height: 100%;
+    /* Cover ensures image fills container, zooming if needed */
     object-fit: cover;
     object-position: center;
     filter: grayscale(20%);
@@ -509,13 +527,20 @@
 
   .article-body {
     color: var(--text-secondary);
-    line-height: 1.7;
+    line-height: 1.9;
     margin-bottom: 30px;
   }
 
   .article-body p {
     margin-bottom: 18px;
     font-size: 1rem;
+    line-height: 2;
+  }
+
+  .article-body br {
+    display: block;
+    content: "";
+    margin-top: 0.5em;
   }
 
   .article-footer {
@@ -619,20 +644,25 @@
   .related-image-container {
     position: relative;
     overflow: hidden;
-    height: 180px;
+    width: 100%;
+    /* Mobile: adapt to image but with constraints */
+    min-height: 150px;
+    max-height: 400px;
+    background: var(--bg-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .related-image {
     width: 100%;
     height: 100%;
+    /* Cover ensures image fills container, zooming if needed */
     object-fit: cover;
     object-position: center;
     filter: grayscale(30%);
     transition: filter 0.3s ease;
-  }
-
-  .related-card:hover .related-image {
-    filter: grayscale(0%);
+    display: block;
   }
 
   .related-overlay {
@@ -880,23 +910,17 @@
       font-size: 1.2rem;
     }
 
+    .article-image-container {
+      /* Desktop: flexible height to accommodate tall images */
+      min-height: 300px;
+      max-height: 700px;
+      height: auto;
+    }
+
     .article-image {
-      height: 400px;
-    }
-
-    .article-body p {
-      font-size: 1.1rem;
-      margin-bottom: 20px;
-    }
-
-    .article-actions {
-      flex-direction: row;
-      gap: 20px;
-    }
-
-    .action-btn {
-      width: auto;
-      min-width: 200px;
+      /* Cover zooms short images, but container can grow for tall images */
+      object-fit: cover;
+      min-height: 300px;
     }
 
     .related-grid {
@@ -949,8 +973,21 @@
       padding: 50px 60px;
     }
 
-    .related-card:hover {
-      transform: translateY(-2px);
+    /* Main article images can be even taller on large screens */
+    .article-image-container {
+      min-height: 400px;
+      max-height: 800px;
+    }
+
+    .article-image {
+      min-height: 400px;
+    }
+
+    /* Related cards slightly taller */
+    .related-image-container {
+      height: 280px;
+      min-height: 280px;
+      max-height: 280px;
     }
   }
 
@@ -986,48 +1023,14 @@
       font-size: 0.95rem;
     }
 
-    .article-image {
-      height: 200px;
+    .article-image-container {
+      min-height: 180px;
+      max-height: 450px;
     }
 
-    .article-body p {
-      font-size: 0.95rem;
-      margin-bottom: 15px;
-    }
-
-    .article-meta {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 10px;
-    }
-
-    .article-category {
-      font-size: 10px;
-      padding: 5px 10px;
-    }
-
-    .article-date {
-      font-size: 11px;
-    }
-
-    .section-title {
-      font-size: 1.1rem;
-    }
-
-    .related-content {
-      padding: 15px;
-    }
-
-    .error-container {
-      padding: 25px 15px;
-    }
-
-    .error-container h2 {
-      font-size: 1.2rem;
-    }
-
-    .error-container p {
-      font-size: 0.9rem;
+    .related-image-container {
+      min-height: 140px;
+      max-height: 350px;
     }
   }
 
@@ -1052,6 +1055,16 @@
     .action-btn {
       padding: 12px 16px;
       font-size: 11px;
+    }
+
+    .article-image-container {
+      min-height: 150px;
+      max-height: 400px;
+    }
+
+    .related-image-container {
+      min-height: 120px;
+      max-height: 300px;
     }
   }
 
