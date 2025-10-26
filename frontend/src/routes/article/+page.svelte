@@ -2,10 +2,10 @@
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { PUBLIC_API_URL } from '$env/static/public';
-  import NavBar from './../../lib/components/NavBar.svelte';
-  import { theme } from './../../lib/stores/theme';
-  import './../../lib/styles/theme.css';
-  
+  import NavBar from '../../lib/components/NavBar.svelte';
+  import { theme } from '$lib/stores/theme';
+  import '$lib/styles/theme.css';
+
   // Navigation links for the navbar
   const navLinks = [
     { href: "/", label: "HOME", active: false },
@@ -21,9 +21,8 @@
   let loading = true;
   let error = null;
   
-  // Get article ID from URL query parameters instead of path params
+  // Get article ID from URL query parameters
   $: articleId = $page.url.searchParams.get('id');
-  $: slug = $page.url.searchParams.get('slug');
   
   // Using environment variable for API URL
   const API_URL = PUBLIC_API_URL;
@@ -33,18 +32,6 @@
     if (typeof document !== 'undefined') {
       document.body.classList.toggle('dark', $theme === 'dark');
     }
-  }
-
-  // Function to slugify titles for URLs
-  function slugify(text) {
-    if (!text) return '';
-    
-    return text
-      .normalize('NFD')
-      .replace(/[^\p{L}\p{N}]+/gu, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .toLowerCase();
   }
   
   // Improved image URL function
@@ -158,7 +145,7 @@
     document.body.classList.toggle('dark', $theme === 'dark');
     
     if (articleId) {
-      console.log(`Article ID from URL: ${articleId}, slug: ${slug}`);
+      console.log(`Article ID from URL: ${articleId}`);
       currentlyLoadedId = articleId;
       fetchArticle(articleId).then(async data => {
         article = data;
@@ -191,8 +178,34 @@
 
 <svelte:head>
   <title>{article ? article.title + ' - Political Gossips' : 'Article - Political Gossips'}</title>
+  
+  <!-- Standard Meta Tags -->
   <meta name="description" content={article ? article.summary : 'Independent investigative journalism exposing political corruption'} />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  {#if article}
+    <!-- Open Graph / Facebook Meta Tags -->
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content={typeof window !== 'undefined' ? window.location.href : ''} />
+    <meta property="og:title" content={article.title} />
+    <meta property="og:description" content={article.summary} />
+    <meta property="og:image" content={getImageUrl(article.articleId)} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="Political Gossips" />
+    <meta property="article:published_time" content={article.date} />
+    <meta property="article:section" content={article.category} />
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content={typeof window !== 'undefined' ? window.location.href : ''} />
+    <meta name="twitter:title" content={article.title} />
+    <meta name="twitter:description" content={article.summary} />
+    <meta name="twitter:image" content={getImageUrl(article.articleId)} />
+    
+    <!-- WhatsApp Meta Tags (uses Open Graph) -->
+    <meta property="og:image:alt" content={article.title} />
+  {/if}
 </svelte:head>
 
 <div class="site-wrapper" class:dark={$theme === 'dark'}>
@@ -303,30 +316,30 @@
           <div class="related-grid">
             {#each relatedArticles as relatedArticle}
               <article class="related-card">
-                <div class="related-image-container">
-                  <img 
-                    src={relatedArticle.image} 
-                    alt={relatedArticle.title}
-                    class="related-image"
-                    on:error={(e) => e.target.src = "https://placehold.co/400x250/2c2c2c/ffffff?text=REPORT"}
-                  />
-                  <div class="related-overlay">
-                    <span class="related-category">{relatedArticle.category.toUpperCase()}</span>
+                <a href={`/article?id=${relatedArticle.id}`} class="related-card-link">
+                  <div class="related-image-container">
+                    <img 
+                      src={relatedArticle.image} 
+                      alt={relatedArticle.title}
+                      class="related-image"
+                      on:error={(e) => e.target.src = "https://placehold.co/400x250/2c2c2c/ffffff?text=REPORT"}
+                    />
+                    <div class="related-overlay">
+                      <span class="related-category">{relatedArticle.category.toUpperCase()}</span>
+                    </div>
                   </div>
-                </div>
-                
-                <div class="related-content">
-                  <h3 class="related-title">
-                    <a href={`/article?id=${relatedArticle.id}&slug=${slugify(relatedArticle.title)}`}>
+                  
+                  <div class="related-content">
+                    <h3 class="related-title">
                       {relatedArticle.title}
-                    </a>
-                  </h3>
-                  <p class="related-summary">{relatedArticle.summary}</p>
-                  <div class="related-meta">
-                    <time class="related-date">{relatedArticle.date}</time>
-                    <span class="read-time">5 min read</span>
+                    </h3>
+                    <p class="related-summary">{relatedArticle.summary}</p>
+                    <div class="related-meta">
+                      <time class="related-date">{relatedArticle.date}</time>
+                      <span class="read-time">5 min read</span>
+                    </div>
                   </div>
-                </div>
+                </a>
               </article>
             {/each}
           </div>
@@ -635,10 +648,12 @@
     overflow: hidden;
     transition: all 0.3s ease;
     box-shadow: 0 1px 3px var(--shadow-light);
+    cursor: pointer;
   }
 
   .related-card:hover {
     box-shadow: 0 4px 15px var(--shadow-medium);
+    transform: translateY(-2px);
   }
 
   .related-image-container {
@@ -1092,5 +1107,18 @@
       display: block;
       padding: 5px 0;
     }
+  }
+
+  /* Add styles for related card links */
+  .related-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    height: 100%;
+  }
+
+  .related-card-link:focus {
+    outline: 3px solid rgba(215, 48, 39, 0.5);
+    outline-offset: 2px;
   }
 </style>

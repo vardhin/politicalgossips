@@ -303,7 +303,7 @@
               <p class="hero-excerpt">{featuredArticles[0].excerpt}</p>
               <div class="hero-meta">
                 <span class="hero-date">{featuredArticles[0].date}</span>
-                <a href={`/article?id=${featuredArticles[0].id}&slug=${slugify(featuredArticles[0].title)}`} class="hero-cta">READ MORE</a>
+                <a href={`/article?id=${featuredArticles[0].id}`} class="hero-cta">READ MORE</a>
               </div>
             </div>
           </div>
@@ -329,7 +329,7 @@
           {:else}
             <div class="featured-grid">
               {#each featuredArticles.slice(1) as article}
-                <a href={`/article?id=${article.id}&slug=${slugify(article.title)}`} class="news-card-link">
+                <a href={`/article?id=${article.id}`} class="news-card-link">
                   <article class="news-card">
                     <div class="news-card-content">
                       <div class="news-image-container">
@@ -374,7 +374,7 @@
           
           <div class="sidebar-news-list">
             {#each latestNews as article}
-              <a href={`/article?id=${article.id}&slug=${slugify(article.title)}`} class="sidebar-news-link">
+              <a href={`/article?id=${article.id}`} class="sidebar-news-link">
                 <article class="sidebar-news-item">
                   <div class="sidebar-news-meta">
                     <span class="sidebar-category">{article.category}</span>
