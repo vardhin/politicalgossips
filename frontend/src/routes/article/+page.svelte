@@ -34,14 +34,14 @@
     }
   }
   
-  // Improved image URL function - MUST return absolute URL for social media
+  // Get absolute image URL for social media
   function getImageUrl(id) {
-    if (!id) return "https://placehold.co/800x400/2c2c2c/ffffff?text=NEWS";
-    // Return absolute URL for social media crawlers
-    return `${API_URL}/image/${id}`;
+    if (!id) return "https://placehold.co/1200x630/2c2c2c/ffffff?text=Political+Gossips";
+    // Use YOUR actual deployed backend URL
+    return `${PUBLIC_API_URL}/image/${id}`;
   }
 
-  // Get absolute URL for sharing
+  // Get absolute article URL
   function getAbsoluteUrl() {
     if (typeof window === 'undefined') return '';
     return window.location.href;
@@ -199,13 +199,17 @@
     <meta property="og:url" content={getAbsoluteUrl()} />
     <meta property="og:title" content={article.title} />
     <meta property="og:description" content={article.summary} />
+    <meta property="og:site_name" content="Political Gossips" />
+    
+    <!-- EXPLICIT og:image - This fixes the warning -->
     <meta property="og:image" content={getImageUrl(article.articleId)} />
     <meta property="og:image:secure_url" content={getImageUrl(article.articleId)} />
     <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content={article.title} />
-    <meta property="og:site_name" content="Political Gossips" />
+    
+    <!-- Additional article metadata -->
     <meta property="og:locale" content="en_US" />
     <meta property="article:published_time" content={article.date} />
     <meta property="article:section" content={article.category} />
@@ -214,14 +218,15 @@
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@politicalgossips" />
+    <meta name="twitter:creator" content="@politicalgossips" />
     <meta name="twitter:url" content={getAbsoluteUrl()} />
     <meta name="twitter:title" content={article.title} />
     <meta name="twitter:description" content={article.summary} />
     <meta name="twitter:image" content={getImageUrl(article.articleId)} />
     <meta name="twitter:image:alt" content={article.title} />
-    
-    <!-- Additional WhatsApp optimization -->
-    <meta property="og:updated_time" content={article.date} />
+  {:else}
+    <!-- Default OG image when no article -->
+    <meta property="og:image" content="https://placehold.co/1200x630/2c2c2c/ffffff?text=Political+Gossips" />
   {/if}
 </svelte:head>
 

@@ -463,39 +463,69 @@ app.get('/image/:articleId', async (req, res) => {
     const { articleId } = req.params;
     const parsedId = parseInt(articleId);
     
+    console.log(`[IMAGE] Requesting article ID: ${parsedId}`);
+    
     if (isNaN(parsedId)) {
+      console.error('[IMAGE] Invalid article ID format');
       return res.status(400).send('Invalid article ID');
     }
     
     const article = await articleService.getArticleById(parsedId);
     
-    if (!article || !article.image || !article.image.data) {
+    if (!article) {
+      console.error(`[IMAGE] Article not found: ${parsedId}`);
+      return res.status(404).send('Article not found');
+    }
+    
+    if (!article.image || !article.image.data) {
+      console.error(`[IMAGE] No image data for article: ${parsedId}`);
       return res.status(404).send('Image not found');
     }
     
-    // Get the image buffer
-    const imageBuffer = article.image.data.buffer || article.image.data;
+    // Get the image buffer - handle different data types
+    let imageBuffer;
+    if (Buffer.isBuffer(article.image.data)) {
+      imageBuffer = article.image.data;
+    } else if (article.image.data.buffer) {
+      imageBuffer = Buffer.from(article.image.data.buffer);
+    } else {
+      imageBuffer = Buffer.from(article.image.data);
+    }
+    
     const contentType = article.image.contentType || 'image/jpeg';
     
-    // Set headers
-    res.setHeader('Content-Type', contentType);
-    res.setHeader('Content-Length', imageBuffer.length);
-    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    console.log(`[IMAGE] Serving image - Type: ${contentType}, Size: ${imageBuffer.length} bytes`);
     
-    // Send the image
-    return res.send(Buffer.from(imageBuffer));
+    // Set headers for proper display
+    res.set({
+      'Content-Type': contentType,
+      'Content-Length': imageBuffer.length,
+      'Content-Disposition': 'inline', // CRITICAL: Display in browser, not download
+      'Cache-Control': 'public, max-age=31536000, immutable',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+      'Cross-Origin-Resource-Policy': 'cross-origin'
+    });
+    
+    return res.send(imageBuffer);
   } catch (error) {
-    console.error('Error serving image:', error);
+    console.error('[IMAGE] Error serving image:', {
+      message: error.message,
+      stack: error.stack,
+      articleId: req.params.articleId
+    });
     return res.status(500).send('Error retrieving image');
   }
 });
 
 // Add OPTIONS handler for CORS preflight
 app.options('/image/:articleId', (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.set({
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+    'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept',
+    'Access-Control-Max-Age': '86400'
+  });
   return res.sendStatus(204);
 });
 
@@ -515,17 +545,28 @@ app.head('/image/:articleId', async (req, res) => {
       return res.sendStatus(404);
     }
     
-    const imageBuffer = article.image.data.buffer || article.image.data;
+    let imageBuffer;
+    if (Buffer.isBuffer(article.image.data)) {
+      imageBuffer = article.image.data;
+    } else if (article.image.data.buffer) {
+      imageBuffer = Buffer.from(article.image.data.buffer);
+    } else {
+      imageBuffer = Buffer.from(article.image.data);
+    }
+    
     const contentType = article.image.contentType || 'image/jpeg';
     
-    res.setHeader('Content-Type', contentType);
-    res.setHeader('Content-Length', imageBuffer.length);
-    res.setHeader('Cache-Control', 'public, max-age=31536000');
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.set({
+      'Content-Type': contentType,
+      'Content-Length': imageBuffer.length,
+      'Content-Disposition': 'inline',
+      'Cache-Control': 'public, max-age=31536000',
+      'Access-Control-Allow-Origin': '*'
+    });
     
     return res.sendStatus(200);
   } catch (error) {
-    console.error('Error in HEAD request:', error);
+    console.error('[IMAGE] Error in HEAD request:', error);
     return res.sendStatus(500);
   }
 });
