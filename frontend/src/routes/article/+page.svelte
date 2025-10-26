@@ -34,153 +34,89 @@
     }
   }
   
-  // Get absolute image URL for social media
-  function getImageUrl(id) {
-    if (!id) return "https://placehold.co/1200x630/2c2c2c/ffffff?text=Political+Gossips";
-    // Use YOUR actual deployed backend URL
-    return `${PUBLIC_API_URL}/image/${id}`;
+  // Get absolute image URL for social media - MUST return full URL
+  function getImageUrl(articleId) {
+    if (!articleId) {
+      // Return your actual default image from backend instead of placehold.co
+      return `${API_URL}/image/1`; // Make sure article ID 1 exists in your database
+    }
+    return `${API_URL}/image/${articleId}`;
   }
 
-  // Get absolute article URL
+  // Get absolute URL for sharing
   function getAbsoluteUrl() {
     if (typeof window === 'undefined') return '';
     return window.location.href;
   }
   
-  // Function to format date
-  function formatDate(dateString) {
-    if (!dateString) return '';
-    
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  }
-
-  // Function to truncate text to 2 lines
-  function truncateToTwoLines(text, maxLength = 100) {
-    if (!text) return '';
-    if (text.length <= maxLength) return text;
-    
-    const truncated = text.substring(0, maxLength);
-    const lastSpace = truncated.lastIndexOf(' ');
-    
-    return (lastSpace > 0 ? truncated.substring(0, lastSpace) : truncated) + '...';
+  // Improved image URL function for displaying in the page
+  function getArticleImageUrl(articleId) {
+    if (!articleId) return "";
+    return `${API_URL}/image/${articleId}`;
   }
   
-  // Enhanced fetch article data function
+  // Fetch article data
   async function fetchArticle(id) {
+    if (!id) {
+      error = 'No article ID provided';
+      loading = false;
+      return;
+    }
+
     try {
       loading = true;
       error = null;
       
-      if (!id) {
-        throw new Error('Invalid article ID');
-      }
-      
-      console.log(`Fetching article with ID: ${id}`);
-      const response = await fetch(`${API_URL}/articles/${id}`);
+      const response = await fetch(`${API_URL}/api/articles/${id}`);
       
       if (!response.ok) {
-        const status = response.status;
-        if (status === 404) {
-          throw new Error('Article not found');
-        } else {
-          throw new Error(`Failed to fetch article: ${response.statusText || status}`);
-        }
+        throw new Error(`Failed to fetch article: ${response.statusText}`);
       }
       
-      const data = await response.json();
-      console.log('Received article data:', data);
-      return data;
+      article = await response.json();
+      
+      // Fetch related articles from the same category
+      if (article.category) {
+        await fetchRelatedArticles(article.category, id);
+      }
     } catch (err) {
       console.error('Error fetching article:', err);
-      error = err.message || 'Failed to load article';
-      return null;
+      error = err.message;
     } finally {
       loading = false;
     }
   }
-
-  // Function to fetch related articles
-  async function fetchRelatedArticles(category) {
+  
+  // Fetch related articles
+  async function fetchRelatedArticles(category, currentId) {
     try {
-      // First try to fetch by category
-      let response = await fetch(`${API_URL}/articles/category/${category.toLowerCase()}?limit=4`);
-      
-      if (!response.ok || response.status === 404) {
-        // If category-specific fetch fails, get featured articles
-        console.log('Category fetch failed, falling back to featured articles');
-        response = await fetch(`${API_URL}/articles/featured?limit=4`);
+      const response = await fetch(`${API_URL}/api/articles/category/${category}?limit=3`);
+      if (response.ok) {
+        const articles = await response.json();
+        // Filter out the current article
+        relatedArticles = articles.filter(a => a.articleId !== parseInt(currentId));
       }
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch related articles');
-      }
-      
-      const data = await response.json();
-      
-      // Format articles to match expected structure
-      return data.map(article => ({
-        id: article.articleId,
-        title: article.title,
-        category: article.category,
-        summary: truncateToTwoLines(article.summary),
-        image: getImageUrl(article.articleId),
-        date: new Date(article.date).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        })
-      }));
     } catch (err) {
       console.error('Error fetching related articles:', err);
-      return [];
     }
   }
   
-  // Add a tracking variable
-  let currentlyLoadedId = null;
-
-  // Use onMount to ensure proper initialization
+  // Format date
+  function formatDate(dateString) {
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString('en-US', options);
+  }
+  
+  // Reactive statement to fetch article when ID changes
+  $: if (articleId) {
+    fetchArticle(articleId);
+  }
+  
   onMount(() => {
-    console.log("URL Search params:", $page.url.searchParams.toString());
-    
-    // Set initial body class
-    document.body.classList.toggle('dark', $theme === 'dark');
-    
     if (articleId) {
-      console.log(`Article ID from URL: ${articleId}`);
-      currentlyLoadedId = articleId;
-      fetchArticle(articleId).then(async data => {
-        article = data;
-        if (data && data.category) {
-          // Fetch related articles based on category
-          relatedArticles = await fetchRelatedArticles(data.category);
-          // Filter out current article from related articles
-          relatedArticles = relatedArticles.filter(related => related.id !== data.articleId);
-        }
-      });
-    } else {
-      error = 'Article ID is missing';
-      loading = false;
+      fetchArticle(articleId);
     }
   });
-  
-  // Watch for URL parameter changes
-  $: if (articleId && !loading && articleId !== currentlyLoadedId) {
-    console.log(`URL parameter changed, fetching article: ${articleId}`);
-    currentlyLoadedId = articleId;
-    fetchArticle(articleId).then(async data => {
-      article = data;
-      if (data && data.category) {
-        relatedArticles = await fetchRelatedArticles(data.category);
-        relatedArticles = relatedArticles.filter(related => related.id !== data.articleId);
-      }
-    });
-  }
 </script>
 
 <svelte:head>
@@ -190,7 +126,7 @@
   <meta name="description" content={article ? article.summary : 'Independent investigative journalism exposing political corruption'} />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  {#if article}
+  {#if article && article.articleId}
     <!-- Canonical URL -->
     <link rel="canonical" href={getAbsoluteUrl()} />
     
@@ -201,7 +137,7 @@
     <meta property="og:description" content={article.summary} />
     <meta property="og:site_name" content="Political Gossips" />
     
-    <!-- EXPLICIT og:image - This fixes the warning -->
+    <!-- EXPLICIT og:image with actual article image -->
     <meta property="og:image" content={getImageUrl(article.articleId)} />
     <meta property="og:image:secure_url" content={getImageUrl(article.articleId)} />
     <meta property="og:image:type" content="image/jpeg" />
@@ -212,7 +148,9 @@
     <!-- Additional article metadata -->
     <meta property="og:locale" content="en_US" />
     <meta property="article:published_time" content={article.date} />
+    <meta property="article:modified_time" content={article.updatedAt || article.date} />
     <meta property="article:section" content={article.category} />
+    <meta property="article:tag" content={article.category} />
     <meta property="article:author" content="Political Gossips" />
     
     <!-- Twitter Card Meta Tags -->
@@ -224,165 +162,108 @@
     <meta name="twitter:description" content={article.summary} />
     <meta name="twitter:image" content={getImageUrl(article.articleId)} />
     <meta name="twitter:image:alt" content={article.title} />
-  {:else}
-    <!-- Default OG image when no article -->
-    <meta property="og:image" content="https://placehold.co/1200x630/2c2c2c/ffffff?text=Political+Gossips" />
+    
+    <!-- Additional meta for better SEO -->
+    <meta name="author" content="Political Gossips" />
+    <meta name="publish_date" property="og:publish_date" content={article.date} />
   {/if}
 </svelte:head>
 
-<div class="site-wrapper" class:dark={$theme === 'dark'}>
-  <!-- Integrated NavBar component -->
-  <NavBar brand="POLITICAL GOSSIPS" links={navLinks} sticky={true} />
+<div class="page-wrapper">
+  <NavBar links={navLinks} />
   
-  <main class="main-content">
-    {#if error}
-      <section class="error-section">
-        <div class="error-container">
-          <h2>NEWS NOT FOUND</h2>
-          <p>{error}</p>
-          <a href="/" class="error-btn">RETURN TO HOMEPAGE</a>
-        </div>
-      </section>
-    {:else if loading}
-      <section class="loading-section">
-        <div class="loading-container">
-          <div class="loading-spinner"></div>
-          <p>Loading News...</p>
-        </div>
-      </section>
-    {:else if !article}
-      <section class="error-section">
-        <div class="error-container">
-          <h2>ARTICLE NOT FOUND</h2>
-          <p>The News you're looking for has been moved or removed.</p>
-          <a href="/" class="error-btn">RETURN TO HOMEPAGE</a>
-        </div>
-      </section>
-    {:else}
-      <!-- Article Content Section -->
-      <article class="article-main">
-        <div class="article-header">
+  <main class="article-page">
+    {#if loading}
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>Loading article...</p>
+      </div>
+    {:else if error}
+      <div class="error">
+        <h2>Error Loading Article</h2>
+        <p>{error}</p>
+        <a href="/" class="btn-back">Back to Home</a>
+      </div>
+    {:else if article}
+      <article class="article-content">
+        <!-- Article Header -->
+        <header class="article-header">
           <div class="article-meta">
-            <span class="article-category">{article.category.toUpperCase()}</span>
-            <time class="article-date">{formatDate(article.date)}</time>
+            <span class="category {article.category?.toLowerCase()}">{article.category}</span>
+            <time datetime={article.date}>{formatDate(article.date)}</time>
           </div>
-          
           <h1 class="article-title">{article.title}</h1>
-          
-          <div class="article-lead">
-            <p class="summary-text">{article.summary}</p>
+          <p class="article-summary">{article.summary}</p>
+        </header>
+
+        <!-- Article Image -->
+        {#if article.articleId}
+          <div class="article-image">
+            <img 
+              src={getArticleImageUrl(article.articleId)} 
+              alt={article.title}
+              loading="lazy"
+            />
           </div>
+        {/if}
+
+        <!-- Article Body -->
+        <div class="article-body">
+          {@html article.article_text}
         </div>
-        
-        <div class="article-image-container">
-          <img 
-            src={getImageUrl(article.articleId)} 
-            alt={article.title}
-            class="article-image"
-            crossorigin="anonymous"
-            on:error={(e) => e.target.src = "https://placehold.co/800x400/2c2c2c/ffffff?text=NEWS"}
-          />
-        </div>
-        
-        <div class="article-content">
-          <div class="article-body">
-            {#each article.article_text.split('\n\n') as paragraph}
-              <p>
-                {#each paragraph.split('.') as sentence, i}
-                  {#if sentence.trim()}
-                    {sentence.trim()}.
-                    {#if i < paragraph.split('.').length - 1}
-                      <br /><br />
-                    {/if}
-                  {/if}
-                {/each}
-              </p>
-            {/each}
-          </div>
-          
-          <div class="article-footer">
-            <div class="article-actions">
-              <a href="/" class="action-btn primary">RETURN TO HOMEPAGE</a>
-              <button class="action-btn secondary" on:click={() => {
-                if (navigator.share) {
-                  navigator.share({
-                    title: article.title,
-                    text: article.summary,
-                    url: window.location.href
-                  }).catch(err => console.error('Error sharing:', err));
-                } else {
-                  const tempInput = document.createElement('input');
-                  document.body.appendChild(tempInput);
-                  tempInput.value = window.location.href;
-                  tempInput.select();
-                  document.execCommand('copy');
-                  document.body.removeChild(tempInput);
-                  alert('Link copied to clipboard!');
-                }
-              }}>
-                SHARE NEWS
-              </button>
-            </div>
+
+        <!-- Social Share Buttons -->
+        <div class="share-section">
+          <h3>Share This Article</h3>
+          <div class="share-buttons">
+            <button 
+              class="share-btn whatsapp"
+              on:click={() => window.open(`https://wa.me/?text=${encodeURIComponent(article.title + ' - ' + getAbsoluteUrl())}`, '_blank')}
+            >
+              <span>WhatsApp</span>
+            </button>
+            <button 
+              class="share-btn facebook"
+              on:click={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getAbsoluteUrl())}`, '_blank')}
+            >
+              <span>Facebook</span>
+            </button>
+            <button 
+              class="share-btn twitter"
+              on:click={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(article.title)}&url=${encodeURIComponent(getAbsoluteUrl())}`, '_blank')}
+            >
+              <span>Twitter</span>
+            </button>
           </div>
         </div>
       </article>
 
-      <!-- Related Articles Section -->
+      <!-- Related Articles -->
       {#if relatedArticles.length > 0}
-        <section class="related-section">
-          <div class="section-header">
-            <h2 class="section-title">RELATED {article.category.toUpperCase()} NEWS</h2>
-            <div class="section-divider"></div>
-          </div>
-          
+        <section class="related-articles">
+          <h2>Related Articles</h2>
           <div class="related-grid">
-            {#each relatedArticles as relatedArticle}
-              <article class="related-card">
-                <a href={`/article?id=${relatedArticle.id}`} class="related-card-link">
-                  <div class="related-image-container">
-                    <img 
-                      src={relatedArticle.image} 
-                      alt={relatedArticle.title}
-                      class="related-image"
-                      on:error={(e) => e.target.src = "https://placehold.co/400x250/2c2c2c/ffffff?text=REPORT"}
-                    />
-                    <div class="related-overlay">
-                      <span class="related-category">{relatedArticle.category.toUpperCase()}</span>
-                    </div>
-                  </div>
-                  
-                  <div class="related-content">
-                    <h3 class="related-title">
-                      {relatedArticle.title}
-                    </h3>
-                    <p class="related-summary">{relatedArticle.summary}</p>
-                    <div class="related-meta">
-                      <time class="related-date">{relatedArticle.date}</time>
-                      <span class="read-time">5 min read</span>
-                    </div>
-                  </div>
-                </a>
-              </article>
+            {#each relatedArticles as related}
+              <a href="/article?id={related.articleId}" class="related-card">
+                {#if related.articleId}
+                  <img 
+                    src={getArticleImageUrl(related.articleId)} 
+                    alt={related.title}
+                    loading="lazy"
+                  />
+                {/if}
+                <div class="related-content">
+                  <span class="category {related.category?.toLowerCase()}">{related.category}</span>
+                  <h3>{related.title}</h3>
+                  <p>{related.summary}</p>
+                </div>
+              </a>
             {/each}
           </div>
         </section>
       {/if}
     {/if}
   </main>
-
-  <footer class="site-footer">
-    <div class="footer-content">
-      <div class="footer-section">
-        <h4>Political Gossips</h4>
-        <p>Independent investigative journalism exposing political corruption and holding power accountable.</p>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <div class="copyright">
-        &copy; {new Date().getFullYear()} Political Gossips. Independent journalism in the public interest.
-      </div>
-    </div>
-  </footer>
 </div>
 
 <style>
