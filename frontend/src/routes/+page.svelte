@@ -62,7 +62,7 @@
   // Function to fetch featured articles with retry capability
   async function fetchFeaturedArticles() {
     try {
-      const response = await fetch(`${API_URL}/articles/featured`);
+      const response = await fetch(`${API_URL}/api/articles/featured`); // Added /api/
       if (!response.ok) throw new Error('API unavailable');
       const data = await response.json();
       if (data.length > 0) {
@@ -78,7 +78,7 @@
   // Function to fetch latest articles with retry capability
   async function fetchLatestArticles() {
     try {
-      const response = await fetch(`${API_URL}/articles/latest?limit=6`);
+      const response = await fetch(`${API_URL}/api/articles/latest?limit=6`); // Added /api/
       if (!response.ok) throw new Error('API unavailable');
       const data = await response.json();
       if (data.length > 0) {
